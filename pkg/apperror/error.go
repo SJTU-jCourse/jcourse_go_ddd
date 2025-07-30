@@ -1,5 +1,7 @@
 package apperror
 
+import "net/http"
+
 type AppError struct {
 	Code    int
 	Message string
@@ -15,6 +17,27 @@ func (e *AppError) Wrap(err error) *AppError {
 		Code:    e.Code,
 		Message: e.Message,
 		Err:     err,
+	}
+}
+
+func (e *AppError) HTTPStatus() int {
+	switch e.Code {
+	case 1001: // ErrNotFound
+		return http.StatusNotFound
+	case 1002: // ErrWrongInput
+		return http.StatusBadRequest
+	case 1003: // ErrRateLimit
+		return http.StatusTooManyRequests
+	case 2002: // ErrWrongAuth
+		return http.StatusUnauthorized
+	case 2003: // ErrSession
+		return http.StatusUnauthorized
+	case 2004: // ErrSuspended
+		return http.StatusForbidden
+	case 3001: // ErrDB
+		return http.StatusInternalServerError
+	default:
+		return http.StatusInternalServerError
 	}
 }
 
