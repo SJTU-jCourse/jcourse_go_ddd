@@ -10,6 +10,8 @@ type ReviewCommandService interface {
 	WriteReview(commonCtx *common.CommonContext, cmd *review.WriteReviewCommand) error
 	UpdateReview(commonCtx *common.CommonContext, cmd *review.UpdateReviewCommand) error
 	DeleteReview(commonCtx *common.CommonContext, cmd *review.DeleteReviewCommand) error
+	PostReviewAction(commonCtx *common.CommonContext, reviewID int, actionType string) error
+	DeleteReviewAction(commonCtx *common.CommonContext, reviewID int, actionID int) error
 }
 
 type reviewCommandService struct {
@@ -82,4 +84,13 @@ func (s *reviewCommandService) DeleteReview(commonCtx *common.CommonContext, cmd
 		return err
 	}
 	return nil
+}
+
+func (s *reviewCommandService) PostReviewAction(commonCtx *common.CommonContext, reviewID int, actionType string) error {
+	action := review.NewReviewAction(reviewID, commonCtx.User.UserID, actionType)
+	return s.reviewRepo.SaveReviewAction(commonCtx.Ctx, &action)
+}
+
+func (s *reviewCommandService) DeleteReviewAction(commonCtx *common.CommonContext, reviewID int, actionID int) error {
+	return s.reviewRepo.DeleteReviewAction(commonCtx.Ctx, actionID)
 }

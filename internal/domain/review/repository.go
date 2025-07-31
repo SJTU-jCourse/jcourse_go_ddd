@@ -16,6 +16,9 @@ type ReviewRepository interface {
 	FindBy(ctx context.Context, filter ReviewFilter) ([]Review, error)
 	Save(ctx context.Context, review *Review, revision *ReviewRevision) error
 	Delete(ctx context.Context, filter ReviewFilter) error
+	SaveReviewAction(ctx context.Context, action *ReviewAction) error
+	DeleteReviewAction(ctx context.Context, actionID int) error
+	GetReviewRevisions(ctx context.Context, reviewID int) ([]ReviewRevision, error)
 }
 
 type CourseFilter struct {
@@ -36,4 +39,9 @@ type CourseRepository interface {
 	Delete(ctx context.Context, filter CourseFilter) error
 
 	FindOfferedCourse(ctx context.Context, courseID int, semester Semester) (*OfferedCourse, error)
+	GetDepartments(ctx context.Context) ([]string, error)
+	GetCategories(ctx context.Context) ([]string, error)
+	GetUserEnrolledCourses(ctx context.Context, userID int) ([]int, error)
+	AddUserEnrolledCourse(ctx context.Context, userID int, courseID int) error
+	WatchCourse(ctx context.Context, userID int, courseID int, watch bool) error
 }

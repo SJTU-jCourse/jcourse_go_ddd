@@ -15,6 +15,7 @@ type AuthService interface {
 	Register(ctx context.Context, cmd auth.RegisterCommand) (*string, error)
 	Logout(ctx context.Context, cmd auth.LogoutCommand) error
 	SendVerificationCode(ctx context.Context, cmd auth.SendVerificationCodeCommand) error
+	GetUserFromSession(ctx context.Context, sessionID string) (*common.User, error)
 }
 
 func NewAuthService(
@@ -103,4 +104,21 @@ func (s *authService) Register(ctx context.Context, cmd auth.RegisterCommand) (*
 
 func (s *authService) SendVerificationCode(ctx context.Context, cmd auth.SendVerificationCodeCommand) error {
 	return s.codeService.SendCode(ctx, cmd.Email)
+}
+
+func (s *authService) GetUserFromSession(ctx context.Context, sessionID string) (*common.User, error) {
+	userID, err := s.session.Get(ctx, sessionID)
+	if err != nil {
+		return nil, apperror.ErrSession
+	}
+
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, apperror.ErrUserNotFound
+	}
+
+	return &common.User{
+		UserID: user.ID,
+		Role:   user.Role,
+	}, nil
 }

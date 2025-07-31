@@ -93,6 +93,17 @@ type ReviewRevision struct {
 	Comment  string
 	Semester Semester
 	Grade    string
+	Rating   Rating
+
+	CreatedAt time.Time
+	DeletedAt *time.Time
+}
+
+type ReviewAction struct {
+	ID         int
+	ReviewID   int
+	UserID     int
+	ActionType string
 
 	CreatedAt time.Time
 	DeletedAt *time.Time

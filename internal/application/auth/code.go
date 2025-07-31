@@ -41,7 +41,10 @@ func (v *verificationCodeService) Verify(ctx context.Context, inputCode string, 
 	if err != nil {
 		return err
 	}
-	if !code.Validate(inputCode) {
+	if code.IsExpired(time.Now()) {
+		return apperror.ErrExpired
+	}
+	if code.Code != inputCode {
 		return apperror.ErrWrongInput
 	}
 	err = v.codeRepo.Delete(ctx, code)
@@ -63,6 +66,10 @@ func (v *verificationCodeService) canSendCode(ctx context.Context, email string)
 	code, err := v.codeRepo.Get(ctx, email)
 	if err != nil {
 		return err
+	}
+	// If no existing code, allow sending
+	if code == nil {
+		return nil
 	}
 	now := time.Now()
 	if now.Sub(code.CreatedAt) < v.interval {

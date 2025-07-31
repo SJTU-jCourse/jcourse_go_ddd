@@ -14,8 +14,10 @@ type UserFilter struct {
 
 type UserRepository interface {
 	Get(ctx context.Context, email string) (*User, error)
+	GetByID(ctx context.Context, userID int) (*User, error)
 	FindBy(ctx context.Context, filter UserFilter) ([]User, error)
 	Save(ctx context.Context, user *User) (int, error)
+	Update(ctx context.Context, user *User) error
 }
 
 type SessionRepository interface {

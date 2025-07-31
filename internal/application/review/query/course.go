@@ -10,6 +10,10 @@ import (
 type CourseQueryService interface {
 	FindCoursesBy(commonCtx *common.CommonContext, filter review.CourseFilter) ([]viewobject.CourseListItemVO, error)
 	GetCourseDetail(commonCtx *common.CommonContext, courseID int) (*viewobject.CourseDetailVO, error)
+	GetCourseFilter(commonCtx *common.CommonContext) (*viewobject.CourseFilterVO, error)
+	GetUserEnrolledCourses(commonCtx *common.CommonContext) ([]viewobject.CourseListItemVO, error)
+	AddUserEnrolledCourse(commonCtx *common.CommonContext, courseID int) error
+	WatchCourse(commonCtx *common.CommonContext, courseID int, watch bool) error
 }
 
 type courseQueryService struct {
@@ -24,6 +28,46 @@ func NewCourseQueryService(
 		courseRepo: courseRepo,
 		reviewRepo: reviewRepo,
 	}
+}
+
+func (s *courseQueryService) GetCourseFilter(commonCtx *common.CommonContext) (*viewobject.CourseFilterVO, error) {
+	departments, err := s.courseRepo.GetDepartments(commonCtx.Ctx)
+	if err != nil {
+		return nil, apperror.ErrDB.Wrap(err)
+	}
+
+	categories, err := s.courseRepo.GetCategories(commonCtx.Ctx)
+	if err != nil {
+		return nil, apperror.ErrDB.Wrap(err)
+	}
+
+	filterVO := viewobject.NewCourseFilterVO(departments, categories)
+	return &filterVO, nil
+}
+
+func (s *courseQueryService) GetUserEnrolledCourses(commonCtx *common.CommonContext) ([]viewobject.CourseListItemVO, error) {
+	courseIDs, err := s.courseRepo.GetUserEnrolledCourses(commonCtx.Ctx, commonCtx.User.UserID)
+	if err != nil {
+		return nil, apperror.ErrDB.Wrap(err)
+	}
+
+	courseList := make([]viewobject.CourseListItemVO, len(courseIDs))
+	for i, courseID := range courseIDs {
+		course, err := s.courseRepo.Get(commonCtx.Ctx, courseID)
+		if err != nil {
+			return nil, apperror.ErrDB.Wrap(err)
+		}
+		courseList[i] = viewobject.NewCourseListItemVO(course)
+	}
+	return courseList, nil
+}
+
+func (s *courseQueryService) AddUserEnrolledCourse(commonCtx *common.CommonContext, courseID int) error {
+	return s.courseRepo.AddUserEnrolledCourse(commonCtx.Ctx, commonCtx.User.UserID, courseID)
+}
+
+func (s *courseQueryService) WatchCourse(commonCtx *common.CommonContext, courseID int, watch bool) error {
+	return s.courseRepo.WatchCourse(commonCtx.Ctx, commonCtx.User.UserID, courseID, watch)
 }
 
 func (s *courseQueryService) FindCoursesBy(commonCtx *common.CommonContext, filter review.CourseFilter) ([]viewobject.CourseListItemVO, error) {

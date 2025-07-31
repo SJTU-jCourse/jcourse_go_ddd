@@ -57,9 +57,71 @@ type CourseDetailVO struct {
 }
 
 func NewCourseListItemVO(c *review.Course) CourseListItemVO {
-	return CourseListItemVO{}
+	mainTeacher := TeacherListItemVO{}
+	if c.MainTeacher != nil {
+		mainTeacher = NewTeacherVO(c.MainTeacher)
+	}
+
+	return CourseListItemVO{
+		ID:          c.ID,
+		Code:        c.Code,
+		Name:        c.Name,
+		Credit:      c.Credit,
+		MainTeacher: mainTeacher,
+		Rating:      NewRatingInfoVO(), // Default empty rating
+		Categories:  []string{},        // Will be populated from latest offered course
+		Department:  "",                // Will be populated from latest offered course
+	}
 }
 
 func NewCourseDetailVO(c *review.Course) CourseDetailVO {
-	return CourseDetailVO{}
+	mainTeacher := TeacherListItemVO{}
+	if c.MainTeacher != nil {
+		mainTeacher = NewTeacherVO(c.MainTeacher)
+	}
+
+	offeredCourses := []OfferedCourseVO{}
+	for _, oc := range c.OfferedCourses {
+		offeredCourses = append(offeredCourses, NewOfferedCourseVO(oc))
+	}
+
+	return CourseDetailVO{
+		ID:                      c.ID,
+		Code:                    c.Code,
+		Name:                    c.Name,
+		Credit:                  c.Credit,
+		MainTeacher:             mainTeacher,
+		Rating:                  NewRatingInfoVO(), // Default empty rating
+		OfferedCourses:          offeredCourses,
+		CoursesUnderSameTeacher: []CourseListItemVO{}, // Will be populated separately
+		CoursesByOtherTeachers:  []CourseListItemVO{}, // Will be populated separately
+	}
+}
+
+func NewRatingInfoVO() RatingInfoVO {
+	return RatingInfoVO{
+		Count: 0,
+		Avg:   0.0,
+		Dist:  map[review.Rating]int{},
+	}
+}
+
+func NewOfferedCourseVO(oc review.OfferedCourse) OfferedCourseVO {
+	teacherGroup := []TeacherListItemVO{}
+	for _, t := range oc.TeacherGroup {
+		teacherGroup = append(teacherGroup, NewTeacherVO(&t))
+	}
+
+	categories := []string{}
+	for _, cat := range oc.Categories {
+		categories = append(categories, string(cat))
+	}
+
+	return OfferedCourseVO{
+		Semester:     oc.Semester.String(),
+		Department:   "", // Will be populated from teacher info
+		Grades:       oc.Grades,
+		Categories:   categories,
+		TeacherGroup: teacherGroup,
+	}
 }

@@ -7,7 +7,6 @@ import (
 
 	"jcourse_go/internal/application/point/command"
 	"jcourse_go/internal/application/point/query"
-	"jcourse_go/internal/domain/common"
 )
 
 type UserPointController struct {
@@ -30,10 +29,7 @@ func (c *UserPointController) GetUserPoint(ctx *gin.Context) {
 		return
 	}
 
-	commonCtx := &common.CommonContext{
-		Ctx:  ctx,
-		User: &common.User{UserID: userID, Role: common.RoleUser},
-	}
+	commonCtx := GetCommonContext(ctx)
 
 	userPoint, err := c.pointQueryService.GetUserPoint(commonCtx.Ctx, userID)
 	if err != nil {

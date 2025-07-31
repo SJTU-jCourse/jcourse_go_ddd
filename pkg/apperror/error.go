@@ -54,6 +54,7 @@ var (
 	ErrSuspended      = &AppError{Code: 2004, Message: "user has been suspended"}
 	ErrNoTargetCourse = &AppError{Code: 2005, Message: "no target course"}
 	ErrNoSemester     = &AppError{Code: 2006, Message: "no semester"}
+	ErrUserNotFound   = &AppError{Code: 2007, Message: "user not found"}
 )
 
 var (

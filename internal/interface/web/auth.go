@@ -21,6 +21,14 @@ func NewAuthController(authService appauth.AuthService, codeService appauth.Veri
 	}
 }
 
+type AuthResponse struct {
+	SessionID string `json:"session_id"`
+}
+
+func NewAuthResponse(sessionID string) AuthResponse {
+	return AuthResponse{SessionID: sessionID}
+}
+
 func (c *AuthController) Login(ctx *gin.Context) {
 	var cmd auth.LoginCommand
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
@@ -34,7 +42,8 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	HandleSuccess(ctx, gin.H{"session_id": *sessionID})
+	response := NewAuthResponse(*sessionID)
+	HandleSuccess(ctx, response)
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
@@ -50,7 +59,8 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	HandleSuccessWithStatus(ctx, http.StatusCreated, gin.H{"session_id": *sessionID})
+	response := NewAuthResponse(*sessionID)
+	HandleSuccessWithStatus(ctx, http.StatusCreated, response)
 }
 
 func (c *AuthController) Logout(ctx *gin.Context) {

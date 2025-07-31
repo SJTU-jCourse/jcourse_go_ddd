@@ -25,3 +25,12 @@ func NewReview(courseID int, userID int, c *ReviewContent) Review {
 		UpdatedAt: time.Now(),
 	}
 }
+
+func NewReviewAction(reviewID int, userID int, actionType string) ReviewAction {
+	return ReviewAction{
+		ReviewID:   reviewID,
+		UserID:     userID,
+		ActionType: actionType,
+		CreatedAt:  time.Now(),
+	}
+}

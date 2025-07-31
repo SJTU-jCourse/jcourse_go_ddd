@@ -69,8 +69,9 @@ func TestVerificationCodeService_SendCode(t *testing.T) {
 				mockRepo := &mockCodeRepository{
 					getCode: &auth.VerificationCode{CreatedAt: time.Now()},
 				}
+				mockEmail := &mockEmailService{sendError: nil}
 				return &verificationCodeService{
-					email:       nil,
+					email:       mockEmail,
 					codeRepo:    mockRepo,
 					codeLength:  6,
 					codeCharset: "0123456789",

@@ -1,0 +1,13 @@
+db:
+  dsn: "jcourse:jcoursepassword@tcp(mysql:3306)/jcourse?charset=utf8mb4&parseTime=True&loc=Local"
+redis:
+  addr: "redis"
+  port: 6379
+  password: ""
+  db: 0
+smtp:
+  host: "smtp.gmail.com"
+  port: 587
+  username: "your-email@gmail.com"
+  password: "your-app-password"
+  sender: "noreply@jcourse.com"

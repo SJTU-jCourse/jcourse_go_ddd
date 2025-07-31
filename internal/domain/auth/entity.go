@@ -29,6 +29,11 @@ func (u *User) IsAdmin() bool {
 	return u.Role == common.RoleAdmin
 }
 
+func (u *User) UpdateNickname(nickname string) {
+	u.Username = nickname
+	u.UpdatedAt = time.Now()
+}
+
 type VerificationCode struct {
 	Code      string
 	Email     string

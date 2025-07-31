@@ -57,3 +57,21 @@ func NewReviewVO(r *review.Review, withCourse bool) ReviewVO {
 	}
 	return rvo
 }
+
+type ReviewRevisionVO struct {
+	ID        int    `json:"id"`
+	ReviewID  int    `json:"review_id"`
+	Comment   string `json:"comment"`
+	Rating    int    `json:"rating"`
+	CreatedAt int64  `json:"created_at"`
+}
+
+func NewReviewRevisionVO(r *review.ReviewRevision) ReviewRevisionVO {
+	return ReviewRevisionVO{
+		ID:        r.ID,
+		ReviewID:  r.ReviewID,
+		Comment:   r.Comment,
+		Rating:    r.Rating.Int(),
+		CreatedAt: r.CreatedAt.Unix(),
+	}
+}
