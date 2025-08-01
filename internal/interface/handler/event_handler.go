@@ -22,10 +22,10 @@ func (h *ReviewEventHandler) Handle(ctx context.Context, e event.Event) error {
 
 	switch e.Type() {
 	case event.TypeReviewCreated:
-		log.Printf("Review created event: ReviewID=%s, UserID=%s, CourseID=%s, Rating=%d",
+		log.Printf("Review created event: ReviewID=%d, UserID=%d, CourseID=%d, Rating=%d",
 			payload.ReviewID, payload.UserID, payload.CourseID, payload.Rating)
 	case event.TypeReviewModified:
-		log.Printf("Review modified event: ReviewID=%s, UserID=%s, CourseID=%s, Rating=%d",
+		log.Printf("Review modified event: ReviewID=%d, UserID=%d, CourseID=%d, Rating=%d",
 			payload.ReviewID, payload.UserID, payload.CourseID, payload.Rating)
 	default:
 		return fmt.Errorf("unsupported review event type: %d", e.Type())
@@ -47,7 +47,7 @@ func (h *PointEventHandler) Handle(ctx context.Context, e event.Event) error {
 	}
 
 	if e.Type() == event.TypeReviewCreated {
-		log.Printf("Awarding points for review creation: UserID=%s, ReviewID=%s",
+		log.Printf("Awarding points for review creation: UserID=%d, ReviewID=%d",
 			payload.UserID, payload.ReviewID)
 	}
 
@@ -68,9 +68,9 @@ func (h *StatisticsEventHandler) Handle(ctx context.Context, e event.Event) erro
 
 	switch e.Type() {
 	case event.TypeReviewCreated:
-		log.Printf("Updating statistics for new review: CourseID=%s", payload.CourseID)
+		log.Printf("Updating statistics for new review: CourseID=%d", payload.CourseID)
 	case event.TypeReviewModified:
-		log.Printf("Updating statistics for modified review: CourseID=%s", payload.CourseID)
+		log.Printf("Updating statistics for modified review: CourseID=%d", payload.CourseID)
 	}
 
 	return nil

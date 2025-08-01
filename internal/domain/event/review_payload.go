@@ -1,9 +1,9 @@
 package event
 
 type ReviewPayload struct {
-	ReviewID string `json:"review_id"`
-	UserID   string `json:"user_id"`
-	CourseID string `json:"course_id"`
+	ReviewID int    `json:"review_id"`
+	UserID   int    `json:"user_id"`
+	CourseID int    `json:"course_id"`
 	Rating   int    `json:"rating"`
 	Content  string `json:"content"`
 	Action   string `json:"action"` // "created" or "modified"

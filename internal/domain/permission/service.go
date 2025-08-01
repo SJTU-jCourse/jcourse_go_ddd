@@ -2,21 +2,20 @@ package permission
 
 import (
 	"context"
-	"strconv"
 
 	"jcourse_go/internal/domain/auth"
 	"jcourse_go/internal/domain/common"
 )
 
 type PermissionService interface {
-	CheckPermission(ctx context.Context, ref ResourceRef, action Action, userID string) (Result, error)
+	CheckPermission(ctx context.Context, ref ResourceRef, action Action, userID int) (Result, error)
 }
 
 type permissionService struct {
 	userRepo auth.UserRepository
 }
 
-func (p *permissionService) CheckPermission(ctx context.Context, ref ResourceRef, action Action, userID string) (Result, error) {
+func (p *permissionService) CheckPermission(ctx context.Context, ref ResourceRef, action Action, userID int) (Result, error) {
 	permCtx := &Ctx{
 		ctx:    ctx,
 		UserID: userID,
@@ -41,32 +40,26 @@ func (p *permissionService) checkReviewPermission(permCtx *Ctx, ref ResourceRef,
 	case ActionView:
 		return Result{Allow: true, Reason: "public access"}, nil
 	case ActionCreate:
-		if permCtx.UserID == "" {
+		if permCtx.UserID == 0 {
 			return Result{Allow: false, Reason: "not authenticated"}, nil
 		}
 		return Result{Allow: true, Reason: "authenticated user"}, nil
 	case ActionUpdate, ActionDelete:
-		if permCtx.UserID == "" {
+		if permCtx.UserID == 0 {
 			return Result{Allow: false, Reason: "not authenticated"}, nil
 		}
 		if ref.Owner.ID == 0 {
 			return Result{Allow: false, Reason: "resource owner not found"}, nil
 		}
 
-		// Convert userID string to int for comparison
-		userID, err := strconv.Atoi(permCtx.UserID)
-		if err != nil {
-			return Result{Allow: false, Reason: "invalid user ID"}, nil
-		}
-
 		// Check if user is admin or owner
-		if userID == ref.Owner.ID {
+		if permCtx.UserID == ref.Owner.ID {
 			return Result{Allow: true, Reason: "owner access"}, nil
 		}
 
 		// Check if user is admin
 		if p.userRepo != nil {
-			user, err := p.userRepo.GetByID(permCtx.ctx, userID)
+			user, err := p.userRepo.GetByID(permCtx.ctx, permCtx.UserID)
 			if err == nil && user.Role == common.RoleAdmin {
 				return Result{Allow: true, Reason: "admin access"}, nil
 			}
@@ -83,24 +76,18 @@ func (p *permissionService) checkUserPermission(permCtx *Ctx, ref ResourceRef, a
 	case ActionView:
 		return Result{Allow: true, Reason: "public access"}, nil
 	case ActionUpdate:
-		if permCtx.UserID == "" {
+		if permCtx.UserID == 0 {
 			return Result{Allow: false, Reason: "not authenticated"}, nil
 		}
 
-		// Convert userID string to int for comparison
-		userID, err := strconv.Atoi(permCtx.UserID)
-		if err != nil {
-			return Result{Allow: false, Reason: "invalid user ID"}, nil
-		}
-
 		// Check if user is owner or admin
-		if userID == ref.Owner.ID {
+		if permCtx.UserID == ref.Owner.ID {
 			return Result{Allow: true, Reason: "owner access"}, nil
 		}
 
 		// Check if user is admin
 		if p.userRepo != nil {
-			user, err := p.userRepo.GetByID(permCtx.ctx, userID)
+			user, err := p.userRepo.GetByID(permCtx.ctx, permCtx.UserID)
 			if err == nil && user.Role == common.RoleAdmin {
 				return Result{Allow: true, Reason: "admin access"}, nil
 			}
@@ -115,19 +102,13 @@ func (p *permissionService) checkUserPermission(permCtx *Ctx, ref ResourceRef, a
 }
 
 func (p *permissionService) checkPointPermission(permCtx *Ctx, ref ResourceRef, action Action) (Result, error) {
-	if permCtx.UserID == "" {
+	if permCtx.UserID == 0 {
 		return Result{Allow: false, Reason: "admin access required"}, nil
-	}
-
-	// Convert userID string to int for comparison
-	userID, err := strconv.Atoi(permCtx.UserID)
-	if err != nil {
-		return Result{Allow: false, Reason: "invalid user ID"}, nil
 	}
 
 	// Check if user is admin
 	if p.userRepo != nil {
-		user, err := p.userRepo.GetByID(permCtx.ctx, userID)
+		user, err := p.userRepo.GetByID(permCtx.ctx, permCtx.UserID)
 		if err == nil && user.Role == common.RoleAdmin {
 			return Result{Allow: true, Reason: "admin access"}, nil
 		}
@@ -141,19 +122,13 @@ func (p *permissionService) checkCoursePermission(permCtx *Ctx, ref ResourceRef,
 	case ActionView:
 		return Result{Allow: true, Reason: "public access"}, nil
 	case ActionCreate, ActionUpdate, ActionDelete:
-		if permCtx.UserID == "" {
+		if permCtx.UserID == 0 {
 			return Result{Allow: false, Reason: "not authenticated"}, nil
-		}
-
-		// Convert userID string to int for comparison
-		userID, err := strconv.Atoi(permCtx.UserID)
-		if err != nil {
-			return Result{Allow: false, Reason: "invalid user ID"}, nil
 		}
 
 		// Check if user is admin
 		if p.userRepo != nil {
-			user, err := p.userRepo.GetByID(permCtx.ctx, userID)
+			user, err := p.userRepo.GetByID(permCtx.ctx, permCtx.UserID)
 			if err == nil && user.Role == common.RoleAdmin {
 				return Result{Allow: true, Reason: "admin access"}, nil
 			}

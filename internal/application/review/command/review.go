@@ -3,7 +3,6 @@ package command
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"time"
 
 	"jcourse_go/internal/domain/common"
@@ -72,9 +71,9 @@ func (s *reviewCommandService) WriteReview(commonCtx *common.CommonContext, cmd 
 
 	if s.eventPublisher != nil {
 		payload := &event.ReviewPayload{
-			ReviewID: strconv.Itoa(r.ID),
-			UserID:   strconv.Itoa(r.UserID),
-			CourseID: strconv.Itoa(r.CourseID),
+			ReviewID: r.ID,
+			UserID:   r.UserID,
+			CourseID: r.CourseID,
 			Rating:   r.Rating.Int(),
 			Content:  r.Comment,
 			Action:   "created",
@@ -118,9 +117,9 @@ func (s *reviewCommandService) UpdateReview(commonCtx *common.CommonContext, cmd
 
 	if s.eventPublisher != nil {
 		payload := &event.ReviewPayload{
-			ReviewID: strconv.Itoa(r.ID),
-			UserID:   strconv.Itoa(r.UserID),
-			CourseID: strconv.Itoa(r.CourseID),
+			ReviewID: r.ID,
+			UserID:   r.UserID,
+			CourseID: r.CourseID,
 			Rating:   r.Rating.Int(),
 			Content:  r.Comment,
 			Action:   "modified",

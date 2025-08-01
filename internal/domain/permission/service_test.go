@@ -71,49 +71,49 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 		name     string
 		ref      ResourceRef
 		action   Action
-		userID   string
+		userID   int
 		expected Result
 	}{
 		{
 			name:     "anonymous user can view review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionView,
-			userID:   "",
+			userID:   0,
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
 			name:     "authenticated user can create review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "2",
+			userID:   2,
 			expected: Result{Allow: true, Reason: "authenticated user"},
 		},
 		{
 			name:     "owner can update review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "2",
+			userID:   2,
 			expected: Result{Allow: true, Reason: "owner access"},
 		},
 		{
 			name:     "admin can update review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "1",
+			userID:   1,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
 			name:     "non-owner cannot update review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "3",
+			userID:   3,
 			expected: Result{Allow: false, Reason: "permission denied"},
 		},
 		{
 			name:     "anonymous user cannot create review",
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "",
+			userID:   0,
 			expected: Result{Allow: false, Reason: "not authenticated"},
 		},
 	}
@@ -135,35 +135,35 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 		name     string
 		ref      ResourceRef
 		action   Action
-		userID   string
+		userID   int
 		expected Result
 	}{
 		{
 			name:     "anyone can view user",
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionView,
-			userID:   "",
+			userID:   0,
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
 			name:     "owner can update user",
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "2",
+			userID:   2,
 			expected: Result{Allow: true, Reason: "owner access"},
 		},
 		{
 			name:     "admin can update user",
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "1",
+			userID:   1,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
 			name:     "non-owner cannot update user",
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
-			userID:   "3",
+			userID:   3,
 			expected: Result{Allow: false, Reason: "permission denied"},
 		},
 	}
@@ -185,28 +185,28 @@ func TestPermissionService_CheckPointPermission(t *testing.T) {
 		name     string
 		ref      ResourceRef
 		action   Action
-		userID   string
+		userID   int
 		expected Result
 	}{
 		{
 			name:     "admin can manage points",
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "1",
+			userID:   1,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
 			name:     "non-admin cannot manage points",
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "2",
+			userID:   2,
 			expected: Result{Allow: false, Reason: "admin access required"},
 		},
 		{
 			name:     "anonymous cannot manage points",
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "",
+			userID:   0,
 			expected: Result{Allow: false, Reason: "admin access required"},
 		},
 	}
@@ -228,28 +228,28 @@ func TestPermissionService_CheckCoursePermission(t *testing.T) {
 		name     string
 		ref      ResourceRef
 		action   Action
-		userID   string
+		userID   int
 		expected Result
 	}{
 		{
 			name:     "anyone can view course",
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionView,
-			userID:   "",
+			userID:   0,
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
 			name:     "admin can create course",
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "1",
+			userID:   1,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
 			name:     "non-admin cannot create course",
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
-			userID:   "2",
+			userID:   2,
 			expected: Result{Allow: false, Reason: "admin access required"},
 		},
 	}

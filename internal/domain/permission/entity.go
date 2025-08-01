@@ -8,7 +8,7 @@ type Strategy interface {
 
 type Ctx struct {
 	ctx    context.Context
-	UserID string
+	UserID int
 }
 
 type Result struct {
