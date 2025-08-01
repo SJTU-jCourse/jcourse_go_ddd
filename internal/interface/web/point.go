@@ -7,6 +7,7 @@ import (
 
 	"jcourse_go/internal/application/point/command"
 	"jcourse_go/internal/application/point/query"
+	"jcourse_go/internal/interface/dto"
 )
 
 type UserPointController struct {
@@ -41,11 +42,7 @@ func (c *UserPointController) GetUserPoint(ctx *gin.Context) {
 }
 
 func (c *UserPointController) CreatePoint(ctx *gin.Context) {
-	var cmd struct {
-		UserID int    `json:"user_id" binding:"required"`
-		Amount int    `json:"amount" binding:"required"`
-		Reason string `json:"reason" binding:"required"`
-	}
+	var cmd dto.CreatePointRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
@@ -64,12 +61,7 @@ func (c *UserPointController) CreatePoint(ctx *gin.Context) {
 }
 
 func (c *UserPointController) Transaction(ctx *gin.Context) {
-	var cmd struct {
-		FromUserID int    `json:"from_user_id" binding:"required"`
-		ToUserID   int    `json:"to_user_id" binding:"required"`
-		Amount     int    `json:"amount" binding:"required"`
-		Reason     string `json:"reason" binding:"required"`
-	}
+	var cmd dto.PointTransactionRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")

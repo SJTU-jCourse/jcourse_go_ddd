@@ -8,6 +8,7 @@ import (
 	"jcourse_go/internal/application/review/query"
 	"jcourse_go/internal/application/viewobject"
 	"jcourse_go/internal/domain/review"
+	"jcourse_go/internal/interface/dto"
 )
 
 type CourseController struct {
@@ -100,9 +101,7 @@ func (c *CourseController) GetUserEnrolledCourses(ctx *gin.Context) {
 }
 
 func (c *CourseController) AddUserEnrolledCourse(ctx *gin.Context) {
-	var cmd struct {
-		CourseID int `json:"course_id" binding:"required"`
-	}
+	var cmd dto.AddEnrolledCourseRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
@@ -128,9 +127,7 @@ func (c *CourseController) WatchCourse(ctx *gin.Context) {
 		return
 	}
 
-	var cmd struct {
-		Watch bool `json:"watch" binding:"required"`
-	}
+	var cmd dto.WatchCourseRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")

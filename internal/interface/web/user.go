@@ -5,6 +5,7 @@ import (
 
 	authquery "jcourse_go/internal/application/auth/query"
 	reviewquery "jcourse_go/internal/application/review/query"
+	"jcourse_go/internal/interface/dto"
 )
 
 type UserController struct {
@@ -32,9 +33,7 @@ func (c *UserController) GetUserInfo(ctx *gin.Context) {
 }
 
 func (c *UserController) UpdateUserInfo(ctx *gin.Context) {
-	var cmd struct {
-		Nickname string `json:"nickname" binding:"required"`
-	}
+	var cmd dto.UpdateUserInfoRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")

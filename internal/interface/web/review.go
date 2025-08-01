@@ -9,6 +9,7 @@ import (
 	"jcourse_go/internal/application/review/command"
 	"jcourse_go/internal/application/review/query"
 	"jcourse_go/internal/domain/review"
+	"jcourse_go/internal/interface/dto"
 )
 
 type ReviewController struct {
@@ -126,9 +127,7 @@ func (c *ReviewController) PostReviewAction(ctx *gin.Context) {
 		return
 	}
 
-	var cmd struct {
-		ActionType string `json:"action_type" binding:"required"`
-	}
+	var cmd dto.PostReviewActionRequest
 
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
