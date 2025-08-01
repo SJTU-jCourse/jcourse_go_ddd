@@ -1,6 +1,9 @@
 package permission
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 type PermissionService interface {
 	CheckPermission(ctx context.Context, ref ResourceRef, action Action, userID string) (Result, error)
@@ -37,9 +40,21 @@ func (p *permissionService) checkReviewPermission(permCtx *Ctx, ref ResourceRef,
 		if ref.Owner.ID == 0 {
 			return Result{Allow: false, Reason: "resource owner not found"}, nil
 		}
-		// TODO: check if user is owner or has admin role
-		// For now, allow owner to edit/delete their own reviews
-		return Result{Allow: true, Reason: "owner access"}, nil
+		
+		// Convert userID string to int for comparison
+		userID, err := strconv.Atoi(permCtx.UserID)
+		if err != nil {
+			return Result{Allow: false, Reason: "invalid user ID"}, nil
+		}
+		
+		// Check if user is admin or owner
+		if userID == ref.Owner.ID {
+			return Result{Allow: true, Reason: "owner access"}, nil
+		}
+		
+		// TODO: Check admin role - this would require user repository
+		// For now, we'll implement this check in the application layer
+		return Result{Allow: false, Reason: "permission denied"}, nil
 	default:
 		return Result{Allow: false, Reason: "unknown action"}, nil
 	}

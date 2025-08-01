@@ -1,7 +1,10 @@
 package command
 
 import (
+	"fmt"
+
 	"jcourse_go/internal/domain/common"
+	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/domain/review"
 	"jcourse_go/pkg/apperror"
 )
@@ -15,16 +18,19 @@ type ReviewCommandService interface {
 }
 
 type reviewCommandService struct {
-	reviewRepo review.ReviewRepository
-	courseRepo review.CourseRepository
+	reviewRepo            review.ReviewRepository
+	courseRepo            review.CourseRepository
+	permissionService     permission.ReviewPermissionService
 }
 
 func NewReviewCommandService(
 	reviewRepo review.ReviewRepository,
-	courseRepo review.CourseRepository) ReviewCommandService {
+	courseRepo review.CourseRepository,
+	permissionService permission.ReviewPermissionService) ReviewCommandService {
 	return &reviewCommandService{
-		reviewRepo: reviewRepo,
-		courseRepo: courseRepo,
+		reviewRepo:        reviewRepo,
+		courseRepo:        courseRepo,
+		permissionService: permissionService,
 	}
 }
 
@@ -61,6 +67,13 @@ func (s *reviewCommandService) UpdateReview(commonCtx *common.CommonContext, cmd
 	if r == nil {
 		return nil
 	}
+
+	// Check permission
+	canUpdate, reason := s.permissionService.CanUpdateReview(commonCtx.Ctx, permission.ToPermissionReview(r), commonCtx.User)
+	if !canUpdate {
+		return apperror.ErrPermission.WithMessage(fmt.Sprintf("cannot update review: %s", reason))
+	}
+
 	revision := review.NewRevisionFromReview(r)
 	r.Update(&cmd.ReviewContent)
 	if err := s.ValidateReview(commonCtx, r); err != nil {
@@ -80,6 +93,13 @@ func (s *reviewCommandService) DeleteReview(commonCtx *common.CommonContext, cmd
 	if r == nil {
 		return nil
 	}
+
+	// Check permission
+	canDelete, reason := s.permissionService.CanDeleteReview(commonCtx.Ctx, permission.ToPermissionReview(r), commonCtx.User)
+	if !canDelete {
+		return apperror.ErrPermission.WithMessage(fmt.Sprintf("cannot delete review: %s", reason))
+	}
+
 	if err := s.reviewRepo.Delete(commonCtx.Ctx, review.ReviewFilter{ReviewID: &cmd.ReviewID}); err != nil {
 		return err
 	}

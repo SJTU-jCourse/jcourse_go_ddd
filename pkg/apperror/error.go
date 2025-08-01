@@ -20,6 +20,14 @@ func (e *AppError) Wrap(err error) *AppError {
 	}
 }
 
+func (e *AppError) WithMessage(message string) *AppError {
+	return &AppError{
+		Code:    e.Code,
+		Message: message,
+		Err:     e.Err,
+	}
+}
+
 func (e *AppError) HTTPStatus() int {
 	switch e.Code {
 	case 1001: // ErrNotFound
@@ -33,6 +41,8 @@ func (e *AppError) HTTPStatus() int {
 	case 2003: // ErrSession
 		return http.StatusUnauthorized
 	case 2004: // ErrSuspended
+		return http.StatusForbidden
+	case 2008: // ErrPermission
 		return http.StatusForbidden
 	case 3001: // ErrDB
 		return http.StatusInternalServerError
@@ -55,6 +65,7 @@ var (
 	ErrNoTargetCourse = &AppError{Code: 2005, Message: "no target course"}
 	ErrNoSemester     = &AppError{Code: 2006, Message: "no semester"}
 	ErrUserNotFound   = &AppError{Code: 2007, Message: "user not found"}
+	ErrPermission     = &AppError{Code: 2008, Message: "permission denied"}
 )
 
 var (

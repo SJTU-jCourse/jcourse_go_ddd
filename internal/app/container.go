@@ -11,6 +11,7 @@ import (
 	statisticsquery "jcourse_go/internal/application/statistics/query"
 	"jcourse_go/internal/config"
 	"jcourse_go/internal/domain/email"
+	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/infrastructure/database"
 	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
@@ -61,6 +62,7 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 
 	hasher := password.NewHasher()
 	emailService := email.NewEmailService()
+	permissionService := permission.NewReviewPermissionChecker(userRepo)
 
 	container := &ServiceContainer{
 		DB:    db,
@@ -69,7 +71,7 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 		AuthService:              app_auth.NewAuthService(userRepo, hasher, sessionRepo, nil),
 		CodeService:              app_auth.NewVerificationCodeService(emailService, codeRepo),
 		CourseQueryService:       reviewquery.NewCourseQueryService(courseRepo, reviewRepo),
-		ReviewCommandService:     reviewcommand.NewReviewCommandService(reviewRepo, courseRepo),
+		ReviewCommandService:     reviewcommand.NewReviewCommandService(reviewRepo, courseRepo, permissionService),
 		ReviewQueryService:       reviewquery.NewReviewQueryService(reviewRepo, courseRepo),
 		PointCommandService:      pointcommand.NewPointCommandService(pointRepo),
 		PointQueryService:        pointquery.NewUserPointQueryService(pointRepo),
