@@ -2,6 +2,7 @@ package app
 
 import (
 	announcementquery "jcourse_go/internal/application/announcement/query"
+	"jcourse_go/internal/application/auth"
 	authcommand "jcourse_go/internal/application/auth/command"
 	authquery "jcourse_go/internal/application/auth/query"
 	pointcommand "jcourse_go/internal/application/point/command"
@@ -10,6 +11,7 @@ import (
 	reviewquery "jcourse_go/internal/application/review/query"
 	statisticsquery "jcourse_go/internal/application/statistics/query"
 	"jcourse_go/internal/config"
+	"jcourse_go/internal/domain/email"
 	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/infrastructure/database"
 	redisclient "jcourse_go/internal/infrastructure/redis"
@@ -26,7 +28,7 @@ type ServiceContainer struct {
 
 	AuthCommandService       authcommand.AuthCommandService
 	AuthQueryService         authquery.AuthQueryService
-	CodeService              interface{}
+	CodeService              auth.VerificationCodeService
 	CourseCommandService     reviewcommand.CourseCommandService
 	CourseQueryService       reviewquery.CourseQueryService
 	ReviewCommandService     reviewcommand.ReviewCommandService
@@ -60,18 +62,21 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 	reviewRepo := repository.NewReviewRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
 	pointRepo := repository.NewUserPointRepository(db)
+	announcementRepo := repository.NewAnnouncementRepository(db)
+	statisticsRepo := repository.NewStatisticsRepository(db)
 
 	hasher := password.NewHasher()
 	permissionService := permission.NewReviewPermissionChecker(userRepo)
 
-	// TODO: Implement VerificationCodeService
-	codeService := struct{}{} // placeholder
+	codeRepo := repository.NewCodeRepository(db)
+	emailService := email.NewEmailService()
+	codeService := auth.NewVerificationCodeService(emailService, codeRepo)
 
 	container := &ServiceContainer{
 		DB:    db,
 		Redis: redisClient,
 
-		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, nil),
+		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, codeService),
 		AuthQueryService:         authquery.NewAuthQueryService(userRepo, sessionRepo),
 		CodeService:              codeService,
 		CourseCommandService:     reviewcommand.NewCourseCommandService(courseRepo),
@@ -82,8 +87,8 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 		PointQueryService:        pointquery.NewUserPointQueryService(pointRepo),
 		UserCommandService:       authcommand.NewUserCommandService(userRepo),
 		UserQueryService:         authquery.NewUserQueryService(userRepo),
-		AnnouncementQueryService: announcementquery.NewAnnouncementQueryService(nil),
-		StatisticsQueryService:   statisticsquery.NewStatisticsQueryService(nil),
+		AnnouncementQueryService: announcementquery.NewAnnouncementQueryService(announcementRepo),
+		StatisticsQueryService:   statisticsquery.NewStatisticsQueryService(statisticsRepo),
 	}
 
 	return container, nil

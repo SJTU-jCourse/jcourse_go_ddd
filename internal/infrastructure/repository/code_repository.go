@@ -46,11 +46,12 @@ func (r *codeRepository) Save(ctx context.Context, code *auth.VerificationCode) 
 		return fmt.Errorf("failed to check existing verification code: %w", result.Error)
 	}
 
-	result = r.db.WithContext(ctx).Model(&entity.VerificationCode{}).Where("email = ?", code.Email).Updates(map[string]interface{}{
+	updateData := map[string]interface{}{
 		"code":       code.Code,
 		"expires_at": code.ExpiresAt,
 		"created_at": time.Now(),
-	})
+	}
+	result = r.db.WithContext(ctx).Model(&entity.VerificationCode{}).Where("email = ?", code.Email).Updates(updateData)
 	if result.Error != nil {
 		return fmt.Errorf("failed to update verification code: %w", result.Error)
 	}

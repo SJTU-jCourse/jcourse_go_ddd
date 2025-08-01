@@ -1,6 +1,9 @@
 package announcement
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Announcement struct {
 	ID          int       `json:"id"`
@@ -13,5 +16,5 @@ type Announcement struct {
 }
 
 type AnnouncementRepository interface {
-	FindPublished(ctx interface{}) ([]Announcement, error)
+	FindPublished(ctx context.Context) ([]Announcement, error)
 }

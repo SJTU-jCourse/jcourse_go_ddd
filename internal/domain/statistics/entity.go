@@ -1,5 +1,7 @@
 package statistics
 
+import "context"
+
 type SystemStatistics struct {
 	DAU                int `json:"dau"`
 	MAU                int `json:"mau"`
@@ -10,5 +12,5 @@ type SystemStatistics struct {
 }
 
 type StatisticsRepository interface {
-	GetSystemStatistics(ctx interface{}) (*SystemStatistics, error)
+	GetSystemStatistics(ctx context.Context) (*SystemStatistics, error)
 }

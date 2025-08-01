@@ -8,7 +8,7 @@ import (
 )
 
 type Template interface {
-	Execute(ctx context.Context, input any) RenderedEmail
+	Execute(ctx context.Context, input *auth.VerificationCode) RenderedEmail
 }
 
 type RenderedEmail struct {
