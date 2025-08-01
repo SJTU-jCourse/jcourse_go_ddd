@@ -11,3 +11,5 @@ smtp:
   username: "your-email@gmail.com"
   password: "your-app-password"
   sender: "noreply@jcourse.com"
+event:
+  enabled: true

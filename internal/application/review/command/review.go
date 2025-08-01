@@ -3,9 +3,11 @@ package command
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"jcourse_go/internal/domain/common"
+	"jcourse_go/internal/domain/event"
 	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/domain/review"
 	"jcourse_go/pkg/apperror"
@@ -23,16 +25,19 @@ type reviewCommandService struct {
 	reviewRepo        review.ReviewRepository
 	courseRepo        review.CourseRepository
 	permissionService permission.ReviewPermissionService
+	eventPublisher    event.Publisher
 }
 
 func NewReviewCommandService(
 	reviewRepo review.ReviewRepository,
 	courseRepo review.CourseRepository,
-	permissionService permission.ReviewPermissionService) ReviewCommandService {
+	permissionService permission.ReviewPermissionService,
+	eventPublisher event.Publisher) ReviewCommandService {
 	return &reviewCommandService{
 		reviewRepo:        reviewRepo,
 		courseRepo:        courseRepo,
 		permissionService: permissionService,
+		eventPublisher:    eventPublisher,
 	}
 }
 
@@ -64,6 +69,23 @@ func (s *reviewCommandService) WriteReview(commonCtx *common.CommonContext, cmd 
 	if err := s.reviewRepo.Save(commonCtx.Ctx, &r, nil); err != nil {
 		return apperror.WrapDB(err).WithMetadata("operation", "write_review").WithMetadata("user_id", commonCtx.User.UserID)
 	}
+
+	if s.eventPublisher != nil {
+		payload := &event.ReviewPayload{
+			ReviewID: strconv.Itoa(r.ID),
+			UserID:   strconv.Itoa(r.UserID),
+			CourseID: strconv.Itoa(r.CourseID),
+			Rating:   r.Rating.Int(),
+			Content:  r.Comment,
+			Action:   "created",
+		}
+
+		reviewEvent := event.NewBaseEvent(event.TypeReviewCreated, payload)
+		if err := s.eventPublisher.Publish(commonCtx.Ctx, reviewEvent); err != nil {
+			return apperror.WrapDB(err).WithMetadata("operation", "publish_review_created_event").WithMetadata("review_id", r.ID)
+		}
+	}
+
 	return nil
 }
 
@@ -93,6 +115,23 @@ func (s *reviewCommandService) UpdateReview(commonCtx *common.CommonContext, cmd
 	if err := s.reviewRepo.Save(commonCtx.Ctx, r, &revision); err != nil {
 		return apperror.WrapDB(err).WithMetadata("operation", "update_review").WithMetadata("review_id", cmd.ReviewID)
 	}
+
+	if s.eventPublisher != nil {
+		payload := &event.ReviewPayload{
+			ReviewID: strconv.Itoa(r.ID),
+			UserID:   strconv.Itoa(r.UserID),
+			CourseID: strconv.Itoa(r.CourseID),
+			Rating:   r.Rating.Int(),
+			Content:  r.Comment,
+			Action:   "modified",
+		}
+
+		reviewEvent := event.NewBaseEvent(event.TypeReviewModified, payload)
+		if err := s.eventPublisher.Publish(commonCtx.Ctx, reviewEvent); err != nil {
+			return apperror.WrapDB(err).WithMetadata("operation", "publish_review_modified_event").WithMetadata("review_id", r.ID)
+		}
+	}
+
 	return nil
 }
 

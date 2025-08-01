@@ -15,6 +15,7 @@ import (
 	"jcourse_go/internal/app"
 	"jcourse_go/internal/config"
 	"jcourse_go/internal/interface/dto"
+	"jcourse_go/internal/interface/task"
 	"jcourse_go/internal/interface/web"
 )
 
@@ -36,6 +37,42 @@ func main() {
 		log.Fatalf("Failed to initialize service container: %v", err)
 	}
 	defer serviceContainer.Close()
+
+	// Create context with cancellation for background tasks
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Setup signal handling
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start background workers if event system is enabled
+	if cfg.Event.Enabled {
+		log.Println("Starting background event handlers...")
+
+		// Start event bus worker (async event processing)
+		if serviceContainer.EventBus != nil {
+			go func() {
+				if err := serviceContainer.EventBus.Start(); err != nil {
+					log.Printf("Failed to start event bus: %v", err)
+				}
+			}()
+		}
+
+		// Start email worker
+		emailWorker := task.NewEmailWorker(serviceContainer)
+		go emailWorker.Start(ctx)
+
+		// Start statistics worker
+		statsWorker := task.NewStatisticsWorker(serviceContainer)
+		go statsWorker.Start(ctx)
+
+		// Start cleanup worker
+		cleanupWorker := task.NewCleanupWorker(serviceContainer)
+		go cleanupWorker.Start(ctx)
+
+		log.Println("Background workers started successfully")
+	}
 
 	// Initialize Gin router
 	router := gin.New()
@@ -63,13 +100,9 @@ func main() {
 		port = "8080"
 	}
 
-	// Setup signal handling
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
 	// Start server
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Starting server on %s", addr)
+	log.Printf("Starting unified server on %s", addr)
 	log.Printf("Health check available at http://localhost%s/health", addr)
 
 	// Create HTTP server
@@ -89,6 +122,9 @@ func main() {
 	<-sigChan
 	log.Println("Received shutdown signal, gracefully stopping server...")
 
+	// Cancel context to stop all background workers
+	cancel()
+
 	// Create shutdown context with timeout
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
@@ -99,4 +135,8 @@ func main() {
 	} else {
 		log.Println("Server stopped gracefully")
 	}
+
+	// Give workers time to clean up
+	time.Sleep(5 * time.Second)
+	log.Println("All services stopped")
 }

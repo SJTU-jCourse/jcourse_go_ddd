@@ -4,6 +4,7 @@ type Config struct {
 	DB    DBConfig    `yaml:"db"`
 	Redis RedisConfig `yaml:"redis"`
 	SMTP  SMTPConfig  `yaml:"smtp"`
+	Event EventConfig `yaml:"event"`
 }
 
 type DBConfig struct {
@@ -23,4 +24,8 @@ type SMTPConfig struct {
 	Username string `yaml:"username"`
 	Password string `yaml:"password"`
 	Sender   string `yaml:"sender"`
+}
+
+type EventConfig struct {
+	Enabled bool `yaml:"enabled"`
 }

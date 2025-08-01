@@ -1,6 +1,8 @@
 package app
 
 import (
+	"strconv"
+
 	announcementquery "jcourse_go/internal/application/announcement/query"
 	"jcourse_go/internal/application/auth"
 	authcommand "jcourse_go/internal/application/auth/command"
@@ -12,10 +14,13 @@ import (
 	statisticsquery "jcourse_go/internal/application/statistics/query"
 	"jcourse_go/internal/config"
 	"jcourse_go/internal/domain/email"
+	"jcourse_go/internal/domain/event"
 	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/infrastructure/database"
+	eventbusimpl "jcourse_go/internal/infrastructure/eventbus"
 	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
+	eventhandler "jcourse_go/internal/interface/handler"
 	"jcourse_go/pkg/password"
 
 	"github.com/go-redis/redis/v8"
@@ -23,8 +28,9 @@ import (
 )
 
 type ServiceContainer struct {
-	DB    *gorm.DB
-	Redis *redis.Client
+	DB       *gorm.DB
+	Redis    *redis.Client
+	EventBus event.EventBusPublisher
 
 	AuthCommandService       authcommand.AuthCommandService
 	AuthQueryService         authquery.AuthQueryService
@@ -72,16 +78,53 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 	emailService := email.NewEmailService()
 	codeService := auth.NewVerificationCodeService(emailService, codeRepo)
 
+	var eventBus event.EventBusPublisher
+	var eventPublisher event.Publisher = nil
+
+	if conf.Event.Enabled {
+		redisAddr := conf.Redis.Addr
+		if conf.Redis.Port != 0 {
+			redisAddr = redisAddr + ":" + strconv.Itoa(conf.Redis.Port)
+		}
+
+		var err error
+		eventBus, err = eventbusimpl.NewAsynqEventBus(redisAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		// Register event handlers
+		reviewHandler := eventhandler.NewReviewEventHandler()
+		pointHandler := eventhandler.NewPointEventHandler()
+		statsHandler := eventhandler.NewStatisticsEventHandler()
+
+		if err := eventBus.Register(event.TypeReviewCreated, reviewHandler); err != nil {
+			return nil, err
+		}
+		if err := eventBus.Register(event.TypeReviewModified, reviewHandler); err != nil {
+			return nil, err
+		}
+		if err := eventBus.Register(event.TypeReviewCreated, pointHandler); err != nil {
+			return nil, err
+		}
+		if err := eventBus.Register(event.TypeReviewModified, statsHandler); err != nil {
+			return nil, err
+		}
+
+		eventPublisher = eventBus
+	}
+
 	container := &ServiceContainer{
-		DB:    db,
-		Redis: redisClient,
+		DB:       db,
+		Redis:    redisClient,
+		EventBus: eventBus,
 
 		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, codeService),
 		AuthQueryService:         authquery.NewAuthQueryService(userRepo, sessionRepo),
 		CodeService:              codeService,
 		CourseCommandService:     reviewcommand.NewCourseCommandService(courseRepo),
 		CourseQueryService:       reviewquery.NewCourseQueryService(courseRepo, reviewRepo),
-		ReviewCommandService:     reviewcommand.NewReviewCommandService(reviewRepo, courseRepo, permissionService),
+		ReviewCommandService:     reviewcommand.NewReviewCommandService(reviewRepo, courseRepo, permissionService, eventPublisher),
 		ReviewQueryService:       reviewquery.NewReviewQueryService(reviewRepo, courseRepo),
 		PointCommandService:      pointcommand.NewPointCommandService(pointRepo),
 		PointQueryService:        pointquery.NewUserPointQueryService(pointRepo),
@@ -103,6 +146,9 @@ func (c *ServiceContainer) Close() error {
 	}
 	if c.Redis != nil {
 		c.Redis.Close()
+	}
+	if c.EventBus != nil {
+		c.EventBus.Shutdown()
 	}
 	return nil
 }
