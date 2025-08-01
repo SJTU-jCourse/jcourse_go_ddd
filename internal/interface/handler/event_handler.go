@@ -85,3 +85,25 @@ func NewNoOpHandler() *NoOpHandler {
 func (h *NoOpHandler) Handle(ctx context.Context, e event.Event) error {
 	return nil
 }
+
+// RegisterEventHandlers registers all event handlers with the event bus
+func RegisterEventHandlers(eventBus event.EventBusPublisher) error {
+	reviewHandler := NewReviewEventHandler()
+	pointHandler := NewPointEventHandler()
+	statsHandler := NewStatisticsEventHandler()
+
+	if err := eventBus.Register(event.TypeReviewCreated, reviewHandler); err != nil {
+		return err
+	}
+	if err := eventBus.Register(event.TypeReviewModified, reviewHandler); err != nil {
+		return err
+	}
+	if err := eventBus.Register(event.TypeReviewCreated, pointHandler); err != nil {
+		return err
+	}
+	if err := eventBus.Register(event.TypeReviewModified, statsHandler); err != nil {
+		return err
+	}
+
+	return nil
+}
