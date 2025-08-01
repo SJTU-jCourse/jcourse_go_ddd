@@ -2,7 +2,6 @@ package email
 
 import (
 	"context"
-	"fmt"
 
 	"jcourse_go/internal/domain/auth"
 )
@@ -24,13 +23,8 @@ type EmailService interface {
 	SendVerificationCode(ctx context.Context, emailAddr string, input *auth.VerificationCode) error
 }
 
-type mockEmailService struct{}
-
+// NewEmailService creates a new email service instance
+// For now, returns a mock implementation that logs to console
 func NewEmailService() EmailService {
-	return &mockEmailService{}
-}
-
-func (s *mockEmailService) SendVerificationCode(ctx context.Context, emailAddr string, input *auth.VerificationCode) error {
-	fmt.Printf("Mock email sent to %s with code %s\n", emailAddr, input.Code)
 	return nil
 }

@@ -12,34 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Mock implementations for the dependencies
-type mockEmailService struct {
-	sendError error
-}
-
-func (m *mockEmailService) SendVerificationCode(ctx context.Context, emailAddr string, input *auth.VerificationCode) error {
-	return m.sendError
-}
-
-type mockCodeRepository struct {
-	getCode     *auth.VerificationCode
-	getError    error
-	saveError   error
-	deleteError error
-}
-
-func (m *mockCodeRepository) Get(ctx context.Context, email string) (*auth.VerificationCode, error) {
-	return m.getCode, m.getError
-}
-
-func (m *mockCodeRepository) Save(ctx context.Context, code *auth.VerificationCode) error {
-	return m.saveError
-}
-
-func (m *mockCodeRepository) Delete(ctx context.Context, code *auth.VerificationCode) error {
-	return m.deleteError
-}
-
 // Tests
 func TestVerificationCodeService_SendCode(t *testing.T) {
 	tests := []struct {
@@ -50,8 +22,8 @@ func TestVerificationCodeService_SendCode(t *testing.T) {
 		{
 			name: "success",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{}
-				mockEmail := &mockEmailService{}
+				mockRepo := &MockCodeRepository{}
+				mockEmail := &MockEmailService{}
 				return &verificationCodeService{
 					email:       mockEmail,
 					codeRepo:    mockRepo,
@@ -66,10 +38,10 @@ func TestVerificationCodeService_SendCode(t *testing.T) {
 		{
 			name: "cannot send rate limit error",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{
-					getCode: &auth.VerificationCode{CreatedAt: time.Now()},
+				mockRepo := &MockCodeRepository{
+					GetCode: &auth.VerificationCode{CreatedAt: time.Now()},
 				}
-				mockEmail := &mockEmailService{sendError: nil}
+				mockEmail := &MockEmailService{SendError: nil}
 				return &verificationCodeService{
 					email:       mockEmail,
 					codeRepo:    mockRepo,
@@ -84,10 +56,10 @@ func TestVerificationCodeService_SendCode(t *testing.T) {
 		{
 			name: "email sending error",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{
-					getCode: nil,
+				mockRepo := &MockCodeRepository{
+					GetCode: nil,
 				}
-				mockEmail := &mockEmailService{sendError: errors.New("email error")}
+				mockEmail := &MockEmailService{SendError: errors.New("email error")}
 				return &verificationCodeService{
 					email:       mockEmail,
 					codeRepo:    mockRepo,
@@ -119,8 +91,8 @@ func TestVerificationCodeService_Verify(t *testing.T) {
 		{
 			name: "success",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{
-					getCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute)},
+				mockRepo := &MockCodeRepository{
+					GetCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute)},
 				}
 				return &verificationCodeService{
 					email:       nil,
@@ -137,8 +109,8 @@ func TestVerificationCodeService_Verify(t *testing.T) {
 		{
 			name: "code doesn't match",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{
-					getCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute)},
+				mockRepo := &MockCodeRepository{
+					GetCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(5 * time.Minute)},
 				}
 				return &verificationCodeService{
 					email:       nil,
@@ -155,8 +127,8 @@ func TestVerificationCodeService_Verify(t *testing.T) {
 		{
 			name: "code expired",
 			setupMocks: func() *verificationCodeService {
-				mockRepo := &mockCodeRepository{
-					getCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(-1 * time.Minute)},
+				mockRepo := &MockCodeRepository{
+					GetCode: &auth.VerificationCode{Code: "123456", ExpiresAt: time.Now().Add(-1 * time.Minute)},
 				}
 				return &verificationCodeService{
 					email:       nil,
