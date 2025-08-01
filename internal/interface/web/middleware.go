@@ -3,13 +3,13 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 
-	"jcourse_go/internal/application/auth"
+	authquery "jcourse_go/internal/application/auth/query"
 	"jcourse_go/internal/domain/common"
 	"jcourse_go/pkg/apperror"
 )
 
 // AuthMiddleware extracts session ID from header and sets user context
-func AuthMiddleware(authService auth.AuthService) gin.HandlerFunc {
+func AuthMiddleware(authQueryService authquery.AuthQueryService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionID := c.GetHeader("X-Session-ID")
 		if sessionID == "" {
@@ -19,7 +19,7 @@ func AuthMiddleware(authService auth.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		user, err := authService.GetUserFromSession(c, sessionID)
+		user, err := authQueryService.GetUserFromSession(c, sessionID)
 		if err != nil {
 			HandleError(c, err)
 			c.Abort()

@@ -3,18 +3,25 @@ package web
 import (
 	"github.com/gin-gonic/gin"
 
+	authcommand "jcourse_go/internal/application/auth/command"
 	authquery "jcourse_go/internal/application/auth/query"
 	reviewquery "jcourse_go/internal/application/review/query"
 	"jcourse_go/internal/interface/dto"
 )
 
 type UserController struct {
+	userCommandService authcommand.UserCommandService
 	userQueryService   authquery.UserQueryService
 	reviewQueryService reviewquery.ReviewQueryService
 }
 
-func NewUserController(userQueryService authquery.UserQueryService, reviewQueryService reviewquery.ReviewQueryService) *UserController {
+func NewUserController(
+	userCommandService authcommand.UserCommandService,
+	userQueryService authquery.UserQueryService,
+	reviewQueryService reviewquery.ReviewQueryService,
+) *UserController {
 	return &UserController{
+		userCommandService: userCommandService,
 		userQueryService:   userQueryService,
 		reviewQueryService: reviewQueryService,
 	}
@@ -23,7 +30,7 @@ func NewUserController(userQueryService authquery.UserQueryService, reviewQueryS
 func (c *UserController) GetUserInfo(ctx *gin.Context) {
 	commonCtx := GetCommonContext(ctx)
 
-	userInfo, err := c.userQueryService.GetUserInfo(commonCtx)
+	userInfo, err := c.userQueryService.GetUserInfo(ctx, commonCtx.User.UserID)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -42,7 +49,7 @@ func (c *UserController) UpdateUserInfo(ctx *gin.Context) {
 
 	commonCtx := GetCommonContext(ctx)
 
-	err := c.userQueryService.UpdateUserInfo(commonCtx, cmd.Nickname)
+	err := c.userCommandService.UpdateUserInfo(ctx, commonCtx.User.UserID, cmd.Nickname)
 	if err != nil {
 		HandleError(ctx, err)
 		return

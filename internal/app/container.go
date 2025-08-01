@@ -2,7 +2,7 @@ package app
 
 import (
 	announcementquery "jcourse_go/internal/application/announcement/query"
-	app_auth "jcourse_go/internal/application/auth"
+	authcommand "jcourse_go/internal/application/auth/command"
 	authquery "jcourse_go/internal/application/auth/query"
 	pointcommand "jcourse_go/internal/application/point/command"
 	pointquery "jcourse_go/internal/application/point/query"
@@ -10,7 +10,6 @@ import (
 	reviewquery "jcourse_go/internal/application/review/query"
 	statisticsquery "jcourse_go/internal/application/statistics/query"
 	"jcourse_go/internal/config"
-	"jcourse_go/internal/domain/email"
 	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/infrastructure/database"
 	redisclient "jcourse_go/internal/infrastructure/redis"
@@ -25,13 +24,16 @@ type ServiceContainer struct {
 	DB    *gorm.DB
 	Redis *redis.Client
 
-	AuthService              app_auth.AuthService
-	CodeService              app_auth.VerificationCodeService
+	AuthCommandService       authcommand.AuthCommandService
+	AuthQueryService         authquery.AuthQueryService
+	CodeService              interface{}
+	CourseCommandService     reviewcommand.CourseCommandService
 	CourseQueryService       reviewquery.CourseQueryService
 	ReviewCommandService     reviewcommand.ReviewCommandService
 	ReviewQueryService       reviewquery.ReviewQueryService
 	PointCommandService      pointcommand.PointCommandService
 	PointQueryService        pointquery.UserPointQueryService
+	UserCommandService       authcommand.UserCommandService
 	UserQueryService         authquery.UserQueryService
 	AnnouncementQueryService announcementquery.AnnouncementQueryService
 	StatisticsQueryService   statisticsquery.StatisticsQueryService
@@ -54,27 +56,31 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 	// }
 
 	userRepo := repository.NewUserRepository(db)
-	codeRepo := repository.NewCodeRepository(db)
 	sessionRepo := repository.NewSessionRepository(redisClient)
 	reviewRepo := repository.NewReviewRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
 	pointRepo := repository.NewUserPointRepository(db)
 
 	hasher := password.NewHasher()
-	emailService := email.NewEmailService()
 	permissionService := permission.NewReviewPermissionChecker(userRepo)
+
+	// TODO: Implement VerificationCodeService
+	codeService := struct{}{} // placeholder
 
 	container := &ServiceContainer{
 		DB:    db,
 		Redis: redisClient,
 
-		AuthService:              app_auth.NewAuthService(userRepo, hasher, sessionRepo, nil),
-		CodeService:              app_auth.NewVerificationCodeService(emailService, codeRepo),
+		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, nil),
+		AuthQueryService:         authquery.NewAuthQueryService(userRepo, sessionRepo),
+		CodeService:              codeService,
+		CourseCommandService:     reviewcommand.NewCourseCommandService(courseRepo),
 		CourseQueryService:       reviewquery.NewCourseQueryService(courseRepo, reviewRepo),
 		ReviewCommandService:     reviewcommand.NewReviewCommandService(reviewRepo, courseRepo, permissionService),
 		ReviewQueryService:       reviewquery.NewReviewQueryService(reviewRepo, courseRepo),
 		PointCommandService:      pointcommand.NewPointCommandService(pointRepo),
 		PointQueryService:        pointquery.NewUserPointQueryService(pointRepo),
+		UserCommandService:       authcommand.NewUserCommandService(userRepo),
 		UserQueryService:         authquery.NewUserQueryService(userRepo),
 		AnnouncementQueryService: announcementquery.NewAnnouncementQueryService(nil),
 		StatisticsQueryService:   statisticsquery.NewStatisticsQueryService(nil),

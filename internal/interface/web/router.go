@@ -4,19 +4,20 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"jcourse_go/internal/app"
+	"jcourse_go/internal/application/auth"
 )
 
 func RegisterRouter(g *gin.Engine, s *app.ServiceContainer) {
-	authController := NewAuthController(s.AuthService, s.CodeService)
-	courseController := NewCourseController(s.CourseQueryService)
+	authController := NewAuthController(s.AuthCommandService, s.AuthQueryService, s.CodeService.(auth.VerificationCodeService))
+	courseController := NewCourseController(s.CourseCommandService, s.CourseQueryService)
 	reviewController := NewReviewController(s.ReviewCommandService, s.ReviewQueryService)
 	pointController := NewUserPointController(s.PointCommandService, s.PointQueryService)
-	userController := NewUserController(s.UserQueryService, s.ReviewQueryService)
+	userController := NewUserController(s.UserCommandService, s.UserQueryService, s.ReviewQueryService)
 	announcementController := NewAnnouncementController(s.AnnouncementQueryService)
 	statisticsController := NewStatisticsController(s.StatisticsQueryService)
 
 	// Apply authentication middleware to all routes
-	g.Use(AuthMiddleware(s.AuthService))
+	g.Use(AuthMiddleware(s.AuthQueryService))
 
 	// API version 1 group
 	v1 := g.Group("/api/v1")

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	reviewcommand "jcourse_go/internal/application/review/command"
 	"jcourse_go/internal/application/review/query"
 	"jcourse_go/internal/application/viewobject"
 	"jcourse_go/internal/domain/review"
@@ -12,12 +13,17 @@ import (
 )
 
 type CourseController struct {
-	courseQueryService query.CourseQueryService
+	courseCommandService reviewcommand.CourseCommandService
+	courseQueryService   query.CourseQueryService
 }
 
-func NewCourseController(courseQueryService query.CourseQueryService) *CourseController {
+func NewCourseController(
+	courseCommandService reviewcommand.CourseCommandService,
+	courseQueryService query.CourseQueryService,
+) *CourseController {
 	return &CourseController{
-		courseQueryService: courseQueryService,
+		courseCommandService: courseCommandService,
+		courseQueryService:   courseQueryService,
 	}
 }
 
@@ -110,7 +116,7 @@ func (c *CourseController) AddUserEnrolledCourse(ctx *gin.Context) {
 
 	commonCtx := GetCommonContext(ctx)
 
-	err := c.courseQueryService.AddUserEnrolledCourse(commonCtx, cmd.CourseID)
+	err := c.courseCommandService.AddUserEnrolledCourse(commonCtx, cmd.CourseID)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -136,7 +142,7 @@ func (c *CourseController) WatchCourse(ctx *gin.Context) {
 
 	commonCtx := GetCommonContext(ctx)
 
-	err = c.courseQueryService.WatchCourse(commonCtx, courseID, cmd.Watch)
+	err = c.courseCommandService.WatchCourse(commonCtx, courseID, cmd.Watch)
 	if err != nil {
 		HandleError(ctx, err)
 		return

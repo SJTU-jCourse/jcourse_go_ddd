@@ -1,49 +1,45 @@
 package query
 
 import (
-	"jcourse_go/internal/application/viewobject"
-	"jcourse_go/internal/domain/auth"
-	"jcourse_go/internal/domain/common"
+	"context"
+
+	"jcourse_go/internal/application/auth"
+	domainauth "jcourse_go/internal/domain/auth"
 	"jcourse_go/pkg/apperror"
 )
 
 type UserQueryService interface {
-	GetUserInfo(commonCtx *common.CommonContext) (*viewobject.UserInfoVO, error)
-	UpdateUserInfo(commonCtx *common.CommonContext, nickname string) error
+	GetUserInfo(ctx context.Context, userID int) (*auth.UserInfoVO, error)
 }
 
 type userQueryService struct {
-	userRepo auth.UserRepository
+	userRepo domainauth.UserRepository
 }
 
-func NewUserQueryService(userRepo auth.UserRepository) UserQueryService {
+func NewUserQueryService(
+	userRepo domainauth.UserRepository,
+) UserQueryService {
 	return &userQueryService{
 		userRepo: userRepo,
 	}
 }
 
-func (s *userQueryService) GetUserInfo(commonCtx *common.CommonContext) (*viewobject.UserInfoVO, error) {
-	user, err := s.userRepo.GetByID(commonCtx.Ctx, commonCtx.User.UserID)
+func (s *userQueryService) GetUserInfo(ctx context.Context, userID int) (*auth.UserInfoVO, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, apperror.ErrDB.Wrap(err)
+		return nil, apperror.WrapDB(err).WithMetadata("operation", "get_user_info").WithMetadata("user_id", userID)
 	}
 	if user == nil {
-		return nil, apperror.ErrUserNotFound
+		return nil, apperror.ErrUserNotFound.WithMetadata("user_id", userID)
 	}
 
-	userInfoVO := viewobject.NewUserInfoVO(user)
-	return &userInfoVO, nil
-}
-
-func (s *userQueryService) UpdateUserInfo(commonCtx *common.CommonContext, nickname string) error {
-	user, err := s.userRepo.GetByID(commonCtx.Ctx, commonCtx.User.UserID)
-	if err != nil {
-		return apperror.ErrDB.Wrap(err)
-	}
-	if user == nil {
-		return apperror.ErrUserNotFound
-	}
-
-	user.UpdateNickname(nickname)
-	return s.userRepo.Update(commonCtx.Ctx, user)
+	return &auth.UserInfoVO{
+		UserID:      user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Role:        user.Role,
+		IsSuspended: user.IsSuspended(),
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+	}, nil
 }

@@ -12,8 +12,6 @@ type CourseQueryService interface {
 	GetCourseDetail(commonCtx *common.CommonContext, courseID int) (*viewobject.CourseDetailVO, error)
 	GetCourseFilter(commonCtx *common.CommonContext) (*viewobject.CourseFilterVO, error)
 	GetUserEnrolledCourses(commonCtx *common.CommonContext) ([]viewobject.CourseListItemVO, error)
-	AddUserEnrolledCourse(commonCtx *common.CommonContext, courseID int) error
-	WatchCourse(commonCtx *common.CommonContext, courseID int, watch bool) error
 }
 
 type courseQueryService struct {
@@ -60,14 +58,6 @@ func (s *courseQueryService) GetUserEnrolledCourses(commonCtx *common.CommonCont
 		courseList[i] = viewobject.NewCourseListItemVO(course)
 	}
 	return courseList, nil
-}
-
-func (s *courseQueryService) AddUserEnrolledCourse(commonCtx *common.CommonContext, courseID int) error {
-	return s.courseRepo.AddUserEnrolledCourse(commonCtx.Ctx, commonCtx.User.UserID, courseID)
-}
-
-func (s *courseQueryService) WatchCourse(commonCtx *common.CommonContext, courseID int, watch bool) error {
-	return s.courseRepo.WatchCourse(commonCtx.Ctx, commonCtx.User.UserID, courseID, watch)
 }
 
 func (s *courseQueryService) FindCoursesBy(commonCtx *common.CommonContext, filter review.CourseFilter) ([]viewobject.CourseListItemVO, error) {

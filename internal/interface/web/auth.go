@@ -5,19 +5,27 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	appauth "jcourse_go/internal/application/auth"
-	"jcourse_go/internal/domain/auth"
+	"jcourse_go/internal/application/auth"
+	authcommand "jcourse_go/internal/application/auth/command"
+	authquery "jcourse_go/internal/application/auth/query"
+	domainauth "jcourse_go/internal/domain/auth"
 )
 
 type AuthController struct {
-	authService appauth.AuthService
-	codeService appauth.VerificationCodeService
+	authCommandService authcommand.AuthCommandService
+	authQueryService   authquery.AuthQueryService
+	codeService        auth.VerificationCodeService
 }
 
-func NewAuthController(authService appauth.AuthService, codeService appauth.VerificationCodeService) *AuthController {
+func NewAuthController(
+	authCommandService authcommand.AuthCommandService,
+	authQueryService authquery.AuthQueryService,
+	codeService auth.VerificationCodeService,
+) *AuthController {
 	return &AuthController{
-		authService: authService,
-		codeService: codeService,
+		authCommandService: authCommandService,
+		authQueryService:   authQueryService,
+		codeService:        codeService,
 	}
 }
 
@@ -30,36 +38,40 @@ func NewAuthResponse(sessionID string) AuthResponse {
 }
 
 func (c *AuthController) Login(ctx *gin.Context) {
-	var cmd auth.LoginCommand
+	var cmd domainauth.LoginCommand
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
 		return
 	}
 
-	sessionID, err := c.authService.Login(ctx, cmd)
+	err := c.authCommandService.Login(ctx, cmd)
 	if err != nil {
 		HandleError(ctx, err)
 		return
 	}
 
-	response := NewAuthResponse(*sessionID)
+	// Get session from context (created by auth command service)
+	sessionID := ctx.GetString("session_id")
+	response := NewAuthResponse(sessionID)
 	HandleSuccess(ctx, response)
 }
 
 func (c *AuthController) Register(ctx *gin.Context) {
-	var cmd auth.RegisterCommand
+	var cmd domainauth.RegisterCommand
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
 		return
 	}
 
-	sessionID, err := c.authService.Register(ctx, cmd)
+	err := c.authCommandService.Register(ctx, cmd)
 	if err != nil {
 		HandleError(ctx, err)
 		return
 	}
 
-	response := NewAuthResponse(*sessionID)
+	// Get session from context (created by auth command service)
+	sessionID := ctx.GetString("session_id")
+	response := NewAuthResponse(sessionID)
 	HandleSuccessWithStatus(ctx, http.StatusCreated, response)
 }
 
@@ -70,8 +82,8 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 		return
 	}
 
-	cmd := auth.LogoutCommand{SessionID: sessionID}
-	err := c.authService.Logout(ctx, cmd)
+	cmd := domainauth.LogoutCommand{SessionID: sessionID}
+	err := c.authCommandService.Logout(ctx, cmd)
 	if err != nil {
 		HandleError(ctx, err)
 		return
@@ -81,13 +93,13 @@ func (c *AuthController) Logout(ctx *gin.Context) {
 }
 
 func (c *AuthController) SendVerificationCode(ctx *gin.Context) {
-	var cmd auth.SendVerificationCodeCommand
+	var cmd domainauth.SendVerificationCodeCommand
 	if err := ctx.ShouldBindJSON(&cmd); err != nil {
 		HandleValidationError(ctx, "invalid request body")
 		return
 	}
 
-	err := c.authService.SendVerificationCode(ctx, cmd)
+	err := c.authCommandService.SendVerificationCode(ctx, cmd)
 	if err != nil {
 		HandleError(ctx, err)
 		return
