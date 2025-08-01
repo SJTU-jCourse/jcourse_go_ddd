@@ -16,6 +16,7 @@ import (
 	"jcourse_go/internal/domain/event"
 	"jcourse_go/internal/domain/permission"
 	"jcourse_go/internal/infrastructure/database"
+	emailimpl "jcourse_go/internal/infrastructure/email"
 	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
 	"jcourse_go/pkg/password"
@@ -25,8 +26,8 @@ import (
 )
 
 type ServiceContainer struct {
-	DB       *gorm.DB
-	Redis    *redis.Client
+	DB    *gorm.DB
+	Redis *redis.Client
 
 	AuthCommandService       authcommand.AuthCommandService
 	AuthQueryService         authquery.AuthQueryService
@@ -72,12 +73,22 @@ func NewServiceContainer(conf config.Config, eventPublisher event.Publisher) (*S
 	permissionService := permission.NewPermissionService(userRepo)
 
 	codeRepo := repository.NewCodeRepository(db)
-	emailService := email.NewEmailService()
+
+	// Setup email service
+	var emailService email.EmailService
+	if conf.SMTP.Host != "" && conf.SMTP.Username != "" && conf.SMTP.Password != "" {
+		smtpSender := emailimpl.NewSMTPSender(conf.SMTP)
+		emailTemplate := emailimpl.NewVerificationCodeTemplate()
+		emailService = email.NewEmailServiceImpl(smtpSender, emailTemplate)
+	} else {
+		emailService = email.NewEmailService()
+	}
+
 	codeService := auth.NewVerificationCodeService(emailService, codeRepo)
 
 	container := &ServiceContainer{
-		DB:       db,
-		Redis:    redisClient,
+		DB:    db,
+		Redis: redisClient,
 
 		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, codeService),
 		AuthQueryService:         authquery.NewAuthQueryService(userRepo, sessionRepo),
