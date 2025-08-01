@@ -67,6 +67,8 @@ func migrateInitialSchema(db *gorm.DB) error {
 		&entity.UserPointRecord{},
 		&entity.UserEnrolledCourse{},
 		&entity.CourseWatch{},
+		&entity.UserSession{},
+		&entity.DailyStatistics{},
 	); err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ func RegisterRouter(g *gin.Engine, s *app.ServiceContainer) {
 	pointController := NewUserPointController(s.PointCommandService, s.PointQueryService)
 	userController := NewUserController(s.UserCommandService, s.UserQueryService, s.ReviewQueryService)
 	announcementController := NewAnnouncementController(s.AnnouncementQueryService)
-	statisticsController := NewStatisticsController(s.StatisticsQueryService)
+	statisticsController := NewStatisticsController(s.StatisticsQueryService, s.DailyStatisticsService)
 
 	// Apply authentication middleware to all routes
 	g.Use(AuthMiddleware(s.AuthQueryService))
@@ -80,5 +80,9 @@ func RegisterRouter(g *gin.Engine, s *app.ServiceContainer) {
 	statistics := v1.Group("/statistics")
 	{
 		statistics.GET("", statisticsController.GetSystemStatistics)
+		statistics.GET("/daily/:date", statisticsController.GetDailyStatistics)
+		statistics.GET("/daily/range", statisticsController.GetDailyStatisticsRange)
+		statistics.GET("/daily/latest", statisticsController.GetLatestDailyStatistics)
+		statistics.POST("/daily/calculate", RequireAdmin(), statisticsController.TriggerDailyStatistics)
 	}
 }

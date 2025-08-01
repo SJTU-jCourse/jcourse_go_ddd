@@ -12,6 +12,7 @@ import (
 	reviewcommand "jcourse_go/internal/application/review/command"
 	reviewquery "jcourse_go/internal/application/review/query"
 	statisticsquery "jcourse_go/internal/application/statistics/query"
+	"jcourse_go/internal/application/statistics/service"
 	"jcourse_go/internal/config"
 	"jcourse_go/internal/domain/email"
 	"jcourse_go/internal/domain/event"
@@ -45,6 +46,7 @@ type ServiceContainer struct {
 	UserQueryService         authquery.UserQueryService
 	AnnouncementQueryService announcementquery.AnnouncementQueryService
 	StatisticsQueryService   statisticsquery.StatisticsQueryService
+	DailyStatisticsService   service.DailyStatisticsService
 }
 
 func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
@@ -132,6 +134,7 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 		UserQueryService:         authquery.NewUserQueryService(userRepo),
 		AnnouncementQueryService: announcementquery.NewAnnouncementQueryService(announcementRepo),
 		StatisticsQueryService:   statisticsquery.NewStatisticsQueryService(statisticsRepo),
+		DailyStatisticsService:   service.NewDailyStatisticsService(statisticsRepo),
 	}
 
 	return container, nil

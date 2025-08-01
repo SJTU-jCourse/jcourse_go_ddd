@@ -6,24 +6,31 @@ import (
 	"time"
 
 	"jcourse_go/internal/app"
+	"jcourse_go/internal/application/statistics/service"
 )
 
 // StatisticsWorker handles periodic statistics calculation
 type StatisticsWorker struct {
-	serviceContainer *app.ServiceContainer
+	serviceContainer  *app.ServiceContainer
+	dailyStatsService service.DailyStatisticsService
 }
 
 func NewStatisticsWorker(serviceContainer *app.ServiceContainer) *StatisticsWorker {
 	return &StatisticsWorker{
-		serviceContainer: serviceContainer,
+		serviceContainer:  serviceContainer,
+		dailyStatsService: serviceContainer.DailyStatisticsService,
 	}
 }
 
 func (w *StatisticsWorker) Start(ctx context.Context) {
 	log.Println("Statistics worker started")
 
-	ticker := time.NewTicker(1 * time.Hour)
+	// Run daily statistics calculation at midnight
+	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
+
+	// Calculate statistics for today on startup
+	go w.calculateDailyStatistics(ctx)
 
 	for {
 		select {
@@ -31,14 +38,23 @@ func (w *StatisticsWorker) Start(ctx context.Context) {
 			log.Println("Statistics worker stopped")
 			return
 		case <-ticker.C:
-			w.calculateStatistics(ctx)
+			w.calculateDailyStatistics(ctx)
 		}
 	}
 }
 
-func (w *StatisticsWorker) calculateStatistics(ctx context.Context) {
-	// Calculate and cache system statistics
-	// This is a placeholder implementation
-	// In a real implementation, you would calculate various statistics
-	// and store them in the cache for quick retrieval
+func (w *StatisticsWorker) calculateDailyStatistics(ctx context.Context) {
+	log.Println("Calculating daily statistics...")
+
+	// Calculate statistics for yesterday (complete day)
+	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterday = time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
+
+	err := w.dailyStatsService.CalculateAndSaveDailyStatistics(ctx, yesterday)
+	if err != nil {
+		log.Printf("Failed to calculate daily statistics for %v: %v", yesterday.Format("2006-01-02"), err)
+		return
+	}
+
+	log.Printf("Successfully calculated daily statistics for %v", yesterday.Format("2006-01-02"))
 }
