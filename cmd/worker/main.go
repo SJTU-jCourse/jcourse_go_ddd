@@ -24,7 +24,11 @@ func main() {
 	}
 
 	// Initialize service container
-	serviceContainer := app.NewServiceContainer(*cfg)
+	serviceContainer, err := app.NewServiceContainer(*cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize service container: %v", err)
+	}
+	defer serviceContainer.Close()
 
 	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())

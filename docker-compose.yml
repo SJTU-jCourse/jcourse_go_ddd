@@ -14,7 +14,7 @@ services:
     volumes:
       - ./config:/root/config
     depends_on:
-      - mysql
+      - postgres
       - redis
     networks:
       - jcourse-network
@@ -31,24 +31,23 @@ services:
     volumes:
       - ./config:/root/config
     depends_on:
-      - mysql
+      - postgres
       - redis
     networks:
       - jcourse-network
     restart: unless-stopped
 
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=jcourse
-      - MYSQL_USER=jcourse
-      - MYSQL_PASSWORD=jcoursepassword
+      - POSTGRES_DB=jcourse
+      - POSTGRES_USER=jcourse
+      - POSTGRES_PASSWORD=jcoursepassword
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - jcourse-network
@@ -81,7 +80,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql_data:
+  postgres_data:
   redis_data:
 
 networks:

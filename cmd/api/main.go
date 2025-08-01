@@ -32,7 +32,11 @@ func main() {
 	}
 
 	// Initialize service container
-	serviceContainer := app.NewServiceContainer(*cfg)
+	serviceContainer, err := app.NewServiceContainer(*cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize service container: %v", err)
+	}
+	defer serviceContainer.Close()
 
 	// Initialize Gin router
 	router := gin.New()
