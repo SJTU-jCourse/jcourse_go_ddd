@@ -1,137 +1,190 @@
 # CLAUDE.md
 
-本文件为 Claude Code (claude.ai/code) 在此代码库中工作时提供指导。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**项目名称：选课社区2.0后端 (jcourse_go)**
+**Project Name: 选课社区2.0后端 (jcourse_go)**
 
-## 开发命令
+## Development Commands
 
-### 构建和运行
-- `go fmt ./...` - 格式化 Go 代码
-- `goimports -local jcourse_go -w $(find . -type f -name '*.go')` - 格式化导入包
-- `go mod tidy` - 清理 Go 模块
-- `make lint` - 运行所有代码检查/格式化命令
+### Build and Run
+- `go fmt ./...` - Format Go code
+- `goimports -local jcourse_go -w $(find . -type f -name '*.go')` - Format imports
+- `go mod tidy` - Clean up Go modules
+- `make lint` - Run all code quality/formatting commands
+- `go run cmd/server/main.go` - Start the unified server (API + workers)
+- `go run cmd/migrate/main.go` - Run database migrations
 
-### 测试
-- `go test ./...` - 运行所有测试
-- `go test -v ./internal/application/auth/...` - 运行特定包的测试
+### Testing
+- `go test ./...` - Run all tests
+- `go test -v ./internal/application/auth/...` - Run tests for specific packages
+- `go test -v ./internal/domain/permission/...` - Run permission service tests
 
-### 代码质量检查
-- `go build ./...` - 验证代码编译
-- `go vet ./...` - 运行静态分析检查
-- `go test ./... -v` - 运行所有测试并显示详细输出
+### Code Quality
+- `go build ./...` - Verify code compilation
+- `go vet ./...` - Run static analysis
+- `go test ./... -v` - Run all tests with verbose output
 
-## 架构概览
+## Architecture Overview
 
-这是一个采用领域驱动设计（DDD）模式和清洁架构的 Go 课程评价系统后端。
+This is a Go course evaluation system backend built with Domain-Driven Design (DDD) and Clean Architecture patterns.
 
-### 核心层级
+### Core Layers
 
-**领域层** (`internal/domain/`):
-- 包含业务逻辑、实体、值对象和领域服务
-- 核心领域：`auth`（认证）、`review`（评价）、`point`（积分）、`permission`（权限）
-- 领域实体强制执行业务规则和不变量
-- 在领域层定义仓储接口
+**Domain Layer** (`internal/domain/`):
+- Contains business logic, entities, value objects, and domain services
+- Core domains: `auth` (authentication), `review` (reviews), `point` (points), `permission` (permissions)
+- Domain entities enforce business rules and invariants
+- Repository interfaces defined at domain layer
 
-**应用层** (`internal/application/`):
-- 包含用例和应用服务
-- 命令用于写操作，查询用于读操作
-- 协调领域对象和仓储
-- 视图对象用于 API 响应
+**Application Layer** (`internal/application/`):
+- Contains use cases and application services
+- Commands for write operations, queries for read operations
+- Coordinates domain objects and repositories
+- View objects for API responses
 
-**基础设施层** (`internal/infrastructure/`):
-- 数据库实现、外部服务
-- 领域仓储的具体实现
+**Infrastructure Layer** (`internal/infrastructure/`):
+- Database implementations, external services
+- Concrete implementations of domain repositories
 
-**接口层** (`internal/interface/`):
-- HTTP 控制器、中间件和路由
-- Web 框架集成（Gin）
+**Interface Layer** (`internal/interface/`):
+- HTTP controllers, middleware, and routing
+- Web framework integration (Gin)
 
-### 核心领域
+### Core Domains
 
-**评价系统**:
-- `Review` 实体：包含课程关联和用户所有权
-- `Course` 和 `OfferedCourse` 实体：包含教师关系
-- `ReviewRevision`：用于审计追踪
-- 命令处理器处理写操作，查询处理器处理读操作
-- 值对象：`Rating`（评分）、`Semester`（学期）、`Category`（分类）
+**Review System**:
+- `Review` entity: contains course association and user ownership
+- `Course` and `OfferedCourse` entities: contain teacher relationships
+- `ReviewRevision`: for audit tracking
+- Command handlers handle write operations, query handlers handle read operations
+- Value objects: `Rating` (rating), `Semester` (semester), `Category` (category)
 
-**认证系统**:
-- 用户管理和会话处理
-- 邮箱验证码
+**Authentication System**:
+- User management and session handling
+- Email verification codes
 
-**积分系统**:
-- 用户积分跟踪和管理
+**Point System**:
+- User point tracking and management
 
-### 常用模式
+### Common Patterns
 
-**依赖注入**:
-- 服务容器模式在 `internal/app/container.go`
-- 仓储接口注入到应用服务中
+**Dependency Injection**:
+- Service container pattern in `internal/app/container.go`
+- Repository interfaces injected into application services
 
-**错误处理**:
-- 自定义错误类型在 `pkg/apperror/`
-- 领域特定的错误代码和包装
+**Error Handling**:
+- Custom error types in `pkg/apperror/`
+- Domain-specific error codes and wrapping
 
-**值对象**:
-- 不可变类型带验证（如 `Rating`、`Semester`）
-- 使用业务规则创建的工厂方法
+**Value Objects**:
+- Immutable types with validation (e.g., `Rating`, `Semester`)
+- Factory methods using business rules
 
-**命令和查询**:
-- 写操作（命令）和读操作（查询）分离的处理器
-- 用于输入验证的命令 DTO
+**Commands and Queries**:
+- Separate handlers for write (commands) and read (queries) operations
+- Command DTOs for input validation
 
-### 项目结构
+### Project Structure
 
 ```
-cmd/                    # 应用程序入口点
-  api/                 # HTTP 服务器
-  worker/              # 后台工作进程
+cmd/                    # Application entry points
+  server/              # Unified server (API + workers)
+  migrate/             # Database migration tool
 internal/
-  app/                 # 依赖注入容器
-  application/         # 用例和应用服务
-    auth/              # 认证命令/查询
-    review/            # 评价系统命令/查询
-    point/             # 积分系统命令/查询
-  domain/              # 业务逻辑和实体
-    auth/              # 用户和会话实体
-    review/            # 课程和评价实体
-    point/             # 积分实体
-    common/            # 共享领域概念
-    event/             # 领域事件
-  config/              # 配置结构
-  interface/           # 外部接口
-    web/               # HTTP 控制器和路由
-    middleware/        # HTTP 中间件
-pkg/                   # 共享库
-  apperror/            # 错误处理工具
-  password/            # 密码工具
+  app/                 # Dependency injection container
+  application/         # Use cases and application services
+    auth/              # Authentication commands/queries
+    review/            # Review system commands/queries
+    point/             # Point system commands/queries
+    announcement/      # Announcement service
+    statistics/        # Statistics service
+    viewobject/        # View object factories
+  domain/              # Business logic and entities
+    auth/              # User and session entities
+    review/            # Course and review entities
+    point/             # Point entities
+    common/            # Shared domain concepts
+    event/             # Domain events
+    permission/        # Permission system
+    announcement/      # Announcement domain
+    statistics/        # Statistics domain
+    email/             # Email service
+  config/              # Configuration management
+  interface/           # External interfaces
+    web/               # HTTP controllers and routing
+    middleware/        # HTTP middleware
+    dto/               # Data transfer objects
+    task/              # Background tasks
+  infrastructure/      # Infrastructure layer
+    database/          # Database connection
+    redis/             # Redis cache
+    repository/        # Repository implementations
+    entity/            # Database entities
+    migrations/        # Database migrations
+pkg/                   # Shared libraries
+  apperror/            # Error handling utilities
+  password/            # Password utilities
 ```
 
-### 配置
+### Configuration
 
-- 基于 YAML 的配置，包含数据库、Redis 和 SMTP 设置
-- 环境特定配置文件位于 `config/` 目录
-- 服务容器管理依赖注入
+- YAML-based configuration with database, Redis, and SMTP settings
+- Environment-specific config files in `config/` directory
+- Service container manages dependency injection
 
-### 开发说明
+### Development Notes
 
-- 需要 Go 1.24
-- 使用 Gin Web 框架进行 HTTP 路由
-- 使用 Testify 进行测试
-- 标准 Go 项目布局，`internal/` 用于私有代码
-- 空的 `main.go` 文件表明这是一个模板/启动项目
+- Requires Go 1.24
+- Uses Gin web framework for HTTP routing
+- Uses Testify for testing
+- Standard Go project layout with `internal/` for private code
+- Unified server architecture with background workers
+- Event-driven architecture with asynq for async processing
 
-### 项目状态
+### Key Features
 
-**最新更新**: 2025-08-01
-- ✅ 所有代码编译成功
-- ✅ 所有单元测试通过 (100% 测试覆盖率)
-- ✅ 代码格式化和静态检查通过
-- ✅ 完成了所有核心服务的实现
-- ✅ 实现了完整的权限系统 (用户、课程、评价、积分)
-- ✅ 完善了课程相关的视图对象工厂方法
-- ✅ 实现了全面的错误处理系统
-- ✅ 添加了管理员中间件和路由保护
-- ✅ 增强了权限验证和服务层集成
-- ✅ 完善了所有领域的权限检查
+- **Unified Server**: Single binary handles both API and background workers
+- **Event System**: Async event processing for reviews, emails, statistics
+- **Background Workers**: Email sending, statistics calculation, cleanup tasks
+- **Permission System**: Role-based access control (RBAC)
+- **Audit Trail**: Complete operation logging and review history
+- **Rate Limiting**: Built-in rate limiting for review creation
+- **Content Validation**: Similarity detection for review content
+
+### Database Schema
+
+- Uses PostgreSQL with GORM ORM
+- Manual migrations via `cmd/migrate/main.go`
+- Entities: User, Course, Review, ReviewRevision, UserPointRecord, etc.
+- Soft delete pattern with `DeletedAt` fields
+
+### Running in Development
+
+```bash
+# Start the unified server (includes background workers)
+go run cmd/server/main.go
+
+# Run database migrations
+go run cmd/migrate/main.go
+
+# Docker development environment
+docker-compose up -d
+```
+
+### Project Status
+
+**Latest Updates**: 2025-08-01
+- ✅ All code compiles successfully
+- ✅ All unit tests pass (100% test coverage)
+- ✅ Code formatting and static checks pass
+- ✅ Complete implementation of all core services
+- ✅ Full permission system (users, courses, reviews, points)
+- ✅ Comprehensive view object factory methods for courses
+- ✅ Complete error handling system
+- ✅ Admin middleware and route protection
+- ✅ Enhanced permission validation and service layer integration
+- ✅ Complete permission checks across all domains
+- ✅ Event-driven architecture with async processing
+- ✅ Background worker system for emails, statistics, and cleanup
+- ✅ Unified server architecture
+- ✅ SMTP email integration with gomail library
