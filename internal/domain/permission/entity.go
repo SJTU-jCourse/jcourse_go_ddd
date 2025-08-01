@@ -31,6 +31,8 @@ type ResourceType int
 const (
 	ResourceTypeReview ResourceType = iota
 	ResourceTypeUser   ResourceType = iota
+	ResourceTypePoint  ResourceType = iota
+	ResourceTypeCourse ResourceType = iota
 )
 
 type Action int

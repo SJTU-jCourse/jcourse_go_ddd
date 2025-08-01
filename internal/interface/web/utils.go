@@ -13,18 +13,18 @@ import (
 func HandleError(ctx *gin.Context, err error) {
 	// Use the new error handler for consistent responses
 	errorResponse := apperror.HandleError(ctx.Request.Context(), err)
-	
+
 	response := dto.BaseResponse{
 		Code: errorResponse.Code,
 		Msg:  errorResponse.Message,
 		Data: nil,
 	}
-	
+
 	// Use user-friendly message if available
 	if errorResponse.UserMessage != "" {
 		response.Msg = errorResponse.UserMessage
 	}
-	
+
 	// Determine HTTP status from error category
 	var appErr *apperror.AppError
 	if errors.As(err, &appErr) {

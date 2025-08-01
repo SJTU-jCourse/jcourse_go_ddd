@@ -95,7 +95,7 @@ func TestReviewPermissionChecker_CanUpdateReview(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			canUpdate, reason := service.CanUpdateReview(ctx, tt.review, tt.user)
-			
+
 			if canUpdate != tt.expected {
 				t.Errorf("CanUpdateReview() = %v, want %v", canUpdate, tt.expected)
 			}
@@ -169,7 +169,7 @@ func TestReviewPermissionChecker_CanDeleteReview(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			canDelete, reason := service.CanDeleteReview(ctx, tt.review, tt.user)
-			
+
 			if canDelete != tt.expected {
 				t.Errorf("CanDeleteReview() = %v, want %v", canDelete, tt.expected)
 			}
@@ -185,9 +185,9 @@ func TestToPermissionReview(t *testing.T) {
 		ID:     123,
 		UserID: 456,
 	}
-	
+
 	permissionReview := ToPermissionReview(domainReview)
-	
+
 	if permissionReview.ID != domainReview.ID {
 		t.Errorf("ToPermissionReview() ID = %v, want %v", permissionReview.ID, domainReview.ID)
 	}

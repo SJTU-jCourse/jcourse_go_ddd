@@ -66,3 +66,30 @@ func RequireAuth() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// RequireAdmin middleware ensures user is admin
+func RequireAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, exists := c.Get("user")
+		if !exists {
+			HandleError(c, apperror.ErrWrongAuth)
+			c.Abort()
+			return
+		}
+
+		userObj, ok := user.(*common.User)
+		if !ok || userObj.UserID == 0 {
+			HandleError(c, apperror.ErrWrongAuth)
+			c.Abort()
+			return
+		}
+
+		if userObj.Role != common.RoleAdmin {
+			HandleError(c, apperror.ErrPermission.WithMessage("admin access required"))
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}

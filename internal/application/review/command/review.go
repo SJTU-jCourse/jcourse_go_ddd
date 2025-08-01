@@ -18,9 +18,9 @@ type ReviewCommandService interface {
 }
 
 type reviewCommandService struct {
-	reviewRepo            review.ReviewRepository
-	courseRepo            review.CourseRepository
-	permissionService     permission.ReviewPermissionService
+	reviewRepo        review.ReviewRepository
+	courseRepo        review.CourseRepository
+	permissionService permission.ReviewPermissionService
 }
 
 func NewReviewCommandService(
@@ -113,6 +113,22 @@ func (s *reviewCommandService) DeleteReview(commonCtx *common.CommonContext, cmd
 }
 
 func (s *reviewCommandService) PostReviewAction(commonCtx *common.CommonContext, reviewID int, actionType string) error {
+	// Check if user is authenticated
+	if commonCtx.User.UserID == 0 {
+		return apperror.ErrPermission.WithMessage("user not authenticated").
+			WithMetadata("review_id", reviewID).
+			WithMetadata("action_type", actionType)
+	}
+
+	// Check if review exists
+	r, err := s.reviewRepo.Get(commonCtx.Ctx, reviewID)
+	if err != nil {
+		return apperror.WrapDB(err).WithMetadata("operation", "post_review_action").WithMetadata("review_id", reviewID)
+	}
+	if r == nil {
+		return apperror.ErrNotFound.WithMessage("review not found").WithMetadata("review_id", reviewID)
+	}
+
 	action := review.NewReviewAction(reviewID, commonCtx.User.UserID, actionType)
 	if err := s.reviewRepo.SaveReviewAction(commonCtx.Ctx, &action); err != nil {
 		return apperror.WrapDB(err).WithMetadata("operation", "post_review_action").WithMetadata("review_id", reviewID).WithMetadata("action_type", actionType)
@@ -121,6 +137,24 @@ func (s *reviewCommandService) PostReviewAction(commonCtx *common.CommonContext,
 }
 
 func (s *reviewCommandService) DeleteReviewAction(commonCtx *common.CommonContext, reviewID int, actionID int) error {
+	// Check if user is authenticated
+	if commonCtx.User.UserID == 0 {
+		return apperror.ErrPermission.WithMessage("user not authenticated").
+			WithMetadata("review_id", reviewID).
+			WithMetadata("action_id", actionID)
+	}
+
+	// Note: Since we don't have GetReviewAction method in the repository,
+	// we'll implement a simpler permission check:
+	// Only admins can delete review actions for now
+	// TODO: Add GetReviewAction method to repository for proper ownership checking
+	if commonCtx.User.Role != common.RoleAdmin {
+		return apperror.ErrPermission.WithMessage("only admins can delete review actions").
+			WithMetadata("review_id", reviewID).
+			WithMetadata("action_id", actionID).
+			WithMetadata("user_id", commonCtx.User.UserID)
+	}
+
 	if err := s.reviewRepo.DeleteReviewAction(commonCtx.Ctx, actionID); err != nil {
 		return apperror.WrapDB(err).WithMetadata("operation", "delete_review_action").WithMetadata("review_id", reviewID).WithMetadata("action_id", actionID)
 	}

@@ -29,7 +29,7 @@ func TestErrorCreation(t *testing.T) {
 
 func TestErrorWrapping(t *testing.T) {
 	originalErr := errors.New("database connection failed")
-	
+
 	// Test WrapDB
 	wrappedErr := WrapDB(originalErr)
 	if !errors.Is(wrappedErr, originalErr) {
@@ -122,7 +122,7 @@ func TestHTTPStatus(t *testing.T) {
 	for _, test := range tests {
 		actual := test.err.HTTPStatus()
 		if actual != test.expected {
-			t.Errorf("Expected HTTP status %d for error %s, got %d", 
+			t.Errorf("Expected HTTP status %d for error %s, got %d",
 				test.expected, test.err.Message, actual)
 		}
 	}
@@ -156,7 +156,7 @@ func TestSeverity(t *testing.T) {
 
 	for _, test := range tests {
 		if test.err.GetSeverity() != test.expected {
-			t.Errorf("Expected severity '%s' for error %s, got '%s'", 
+			t.Errorf("Expected severity '%s' for error %s, got '%s'",
 				test.expected, test.err.Message, test.err.GetSeverity())
 		}
 	}

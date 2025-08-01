@@ -69,7 +69,7 @@ func (h *ErrorHandler) handleAppError(ctx context.Context, err *AppError) *Error
 // handleGenericError processes a generic error
 func (h *ErrorHandler) handleGenericError(ctx context.Context, err error) *ErrorResponse {
 	wrappedErr := WrapInternal(err)
-	
+
 	response := &ErrorResponse{
 		Success:     false,
 		Code:        wrappedErr.Code,
@@ -100,11 +100,11 @@ func (h *ErrorHandler) logError(ctx context.Context, err *AppError) {
 		err.Code,
 		err.Error(),
 	)
-	
+
 	if err.Err != nil {
 		logEntry += fmt.Sprintf(" | Wrapped: %v", err.Err)
 	}
-	
+
 	// In a real implementation, this would use a proper logger
 	fmt.Printf("ERROR: %s\n", logEntry)
 }
@@ -134,14 +134,14 @@ func (h *ErrorHandler) getStackTrace() []string {
 
 // ErrorResponse represents a structured error response
 type ErrorResponse struct {
-	Success     bool            `json:"success"`
-	Code        int             `json:"code"`
-	Message     string          `json:"message"`
-	Category    int             `json:"category,omitempty"`
-	UserMessage string          `json:"user_message,omitempty"`
-	Metadata    map[string]any  `json:"metadata,omitempty"`
-	StackTrace  []string        `json:"stack_trace,omitempty"`
-	Timestamp   time.Time       `json:"timestamp"`
+	Success     bool           `json:"success"`
+	Code        int            `json:"code"`
+	Message     string         `json:"message"`
+	Category    int            `json:"category,omitempty"`
+	UserMessage string         `json:"user_message,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	StackTrace  []string       `json:"stack_trace,omitempty"`
+	Timestamp   time.Time      `json:"timestamp"`
 }
 
 // getUserMessage returns the user-friendly message or falls back to the default
@@ -149,7 +149,7 @@ func (e *AppError) getUserMessage() string {
 	if e.UserMessage != "" {
 		return e.UserMessage
 	}
-	
+
 	// Default user messages based on category
 	switch e.Category {
 	case CategoryValidation:
@@ -208,18 +208,18 @@ func (e *AppError) WithContext(ctx context.Context) *AppError {
 	if ctx == nil {
 		return e
 	}
-	
+
 	newErr := e.WithMessage(e.Message)
-	
+
 	// Add request ID if available
 	if requestID := ctx.Value("request_id"); requestID != nil {
 		newErr = newErr.WithMetadata("request_id", requestID)
 	}
-	
+
 	// Add user ID if available
 	if userID := ctx.Value("user_id"); userID != nil {
 		newErr = newErr.WithMetadata("user_id", userID)
 	}
-	
+
 	return newErr
 }

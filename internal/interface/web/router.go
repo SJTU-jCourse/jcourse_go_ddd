@@ -15,10 +15,13 @@ func RegisterRouter(g *gin.Engine, s *app.ServiceContainer) {
 	announcementController := NewAnnouncementController(s.AnnouncementQueryService)
 	statisticsController := NewStatisticsController(s.StatisticsQueryService)
 
+	// Apply authentication middleware to all routes
+	g.Use(AuthMiddleware(s.AuthService))
+
 	// API version 1 group
 	v1 := g.Group("/api/v1")
 
-	// Auth routes
+	// Auth routes (no auth required)
 	auth := v1.Group("/auth")
 	{
 		auth.POST("/login", authController.Login)
@@ -31,33 +34,41 @@ func RegisterRouter(g *gin.Engine, s *app.ServiceContainer) {
 	courses := v1.Group("/course")
 	{
 		courses.GET("/filter", courseController.GetCourseFilter)
-		courses.GET("/enroll", courseController.GetUserEnrolledCourses)
-		courses.POST("/enroll", courseController.AddUserEnrolledCourse)
+		courses.GET("/enroll", RequireAuth(), courseController.GetUserEnrolledCourses)
+		courses.POST("/enroll", RequireAuth(), courseController.AddUserEnrolledCourse)
 		courses.GET("/search", courseController.SearchCourses)
 		courses.GET("/:id", courseController.GetCourseDetail)
 		courses.GET("/:id/review", reviewController.GetCourseReviews)
-		courses.POST("/:id/watch", courseController.WatchCourse)
+		courses.POST("/:id/watch", RequireAuth(), courseController.WatchCourse)
 	}
 
 	// Review routes
 	reviews := v1.Group("/review")
 	{
 		reviews.GET("", reviewController.GetLatestReviews)
-		reviews.POST("", reviewController.WriteReview)
-		reviews.PUT("/:id", reviewController.UpdateReview)
-		reviews.DELETE("/:id", reviewController.DeleteReview)
-		reviews.POST("/:id/action", reviewController.PostReviewAction)
-		reviews.DELETE("/:id/action/:actionID", reviewController.DeleteReviewAction)
+		reviews.POST("", RequireAuth(), reviewController.WriteReview)
+		reviews.PUT("/:id", RequireAuth(), reviewController.UpdateReview)
+		reviews.DELETE("/:id", RequireAuth(), reviewController.DeleteReview)
+		reviews.POST("/:id/action", RequireAuth(), reviewController.PostReviewAction)
+		reviews.DELETE("/:id/action/:actionID", RequireAuth(), reviewController.DeleteReviewAction)
 		reviews.GET("/:id/revision", reviewController.GetReviewRevisions)
 	}
 
 	// User routes
 	users := v1.Group("/user")
 	{
-		users.GET("/info", userController.GetUserInfo)
-		users.POST("/info", userController.UpdateUserInfo)
-		users.GET("/point", pointController.GetUserPoint)
-		users.GET("/review", userController.GetUserReviews)
+		users.GET("/info", RequireAuth(), userController.GetUserInfo)
+		users.POST("/info", RequireAuth(), userController.UpdateUserInfo)
+		users.GET("/point", RequireAuth(), pointController.GetUserPoint)
+		users.GET("/review", RequireAuth(), userController.GetUserReviews)
+	}
+
+	// Admin routes
+	admin := v1.Group("/admin")
+	admin.Use(RequireAdmin())
+	{
+		admin.POST("/point", pointController.CreatePoint)
+		admin.POST("/point/transaction", pointController.Transaction)
 	}
 
 	announcements := v1.Group("/announcement")

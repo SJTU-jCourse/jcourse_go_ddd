@@ -51,7 +51,7 @@ func ExampleCustomError() {
 		WithUserMessage("This email address is already registered").
 		WithMetadata("field", "email").
 		WithMetadata("email", "user@example.com")
-	
+
 	response := HandleError(context.Background(), err)
 	fmt.Printf("Error response: %+v\n", response)
 }
@@ -59,10 +59,10 @@ func ExampleCustomError() {
 // Example 4: Error handling in HTTP handlers
 func ExampleHTTPErrorHandling() {
 	ctx := context.WithValue(context.Background(), "request_id", "req-123")
-	
+
 	err := performRestrictedOperation(ctx)
 	response := HandleError(ctx, err)
-	
+
 	fmt.Printf("HTTP Response: Code=%d, Message=%s, UserMessage=%s\n",
 		response.Code, response.Message, response.UserMessage)
 }
@@ -76,7 +76,7 @@ func performRestrictedOperation(ctx context.Context) error {
 // Example 5: Error handling with middleware
 func ExampleMiddlewareErrorHandling() {
 	err := processData("invalid-data")
-	
+
 	// Check error type and handle accordingly
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -104,20 +104,20 @@ func processData(data string) error {
 // Example 6: Error handling in tests
 func TestErrorHandling(t *testing.T) {
 	err := someOperation()
-	
+
 	// Test for specific error type
 	if errors.Is(err, ErrNotFound) {
 		t.Log("Correctly identified not found error")
 		return
 	}
-	
+
 	// Test for error category
 	var appErr *AppError
 	if errors.As(err, &appErr) && appErr.Category == CategoryValidation {
 		t.Log("Correctly identified validation error")
 		return
 	}
-	
+
 	t.Errorf("Unexpected error: %v", err)
 }
 
@@ -169,9 +169,9 @@ func retryOperation() error {
 func ExampleErrorLogging() {
 	ctx := context.Background()
 	err := criticalOperation()
-	
+
 	response := HandleError(ctx, err)
-	
+
 	// Log the error with severity
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -193,7 +193,7 @@ func ExampleErrorPatterns() {
 	if err := validateInput("test"); err != nil {
 		return // Handle error
 	}
-	
+
 	// Pattern 2: Error wrapping with context
 	err := processRequest("test")
 	if err != nil {
@@ -201,7 +201,7 @@ func ExampleErrorPatterns() {
 		wrappedErr := ErrWrongInput.Wrap(err)
 		fmt.Println(wrappedErr)
 	}
-	
+
 	// Pattern 3: Error transformation
 	err = processDataLayer("test")
 	if err != nil {

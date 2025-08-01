@@ -39,3 +39,50 @@ func (c *UserPointController) GetUserPoint(ctx *gin.Context) {
 
 	HandleSuccess(ctx, userPoint)
 }
+
+func (c *UserPointController) CreatePoint(ctx *gin.Context) {
+	var cmd struct {
+		UserID int    `json:"user_id" binding:"required"`
+		Amount int    `json:"amount" binding:"required"`
+		Reason string `json:"reason" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&cmd); err != nil {
+		HandleValidationError(ctx, "invalid request body")
+		return
+	}
+
+	commonCtx := GetCommonContext(ctx)
+
+	err := c.pointCommandService.CreatePoint(commonCtx, cmd.UserID, cmd.Amount, cmd.Reason)
+	if err != nil {
+		HandleError(ctx, err)
+		return
+	}
+
+	HandleSuccess(ctx, nil)
+}
+
+func (c *UserPointController) Transaction(ctx *gin.Context) {
+	var cmd struct {
+		FromUserID int    `json:"from_user_id" binding:"required"`
+		ToUserID   int    `json:"to_user_id" binding:"required"`
+		Amount     int    `json:"amount" binding:"required"`
+		Reason     string `json:"reason" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&cmd); err != nil {
+		HandleValidationError(ctx, "invalid request body")
+		return
+	}
+
+	commonCtx := GetCommonContext(ctx)
+
+	err := c.pointCommandService.Transaction(commonCtx, cmd.FromUserID, cmd.ToUserID, cmd.Amount, cmd.Reason)
+	if err != nil {
+		HandleError(ctx, err)
+		return
+	}
+
+	HandleSuccess(ctx, nil)
+}

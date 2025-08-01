@@ -7,10 +7,10 @@ import (
 
 // Error categories
 const (
-	CategoryDomain       = 1000 // Business logic errors
-	CategoryAuth         = 2000 // Authentication errors
-	CategoryPermission   = 3000 // Authorization errors
-	CategoryValidation   = 4000 // Input validation errors
+	CategoryDomain         = 1000 // Business logic errors
+	CategoryAuth           = 2000 // Authentication errors
+	CategoryPermission     = 3000 // Authorization errors
+	CategoryValidation     = 4000 // Input validation errors
 	CategoryInfrastructure = 5000 // Infrastructure errors
 )
 
@@ -93,7 +93,7 @@ func (e *AppError) HTTPStatus() int {
 	if e.httpStatus != 0 {
 		return e.httpStatus
 	}
-	
+
 	// Default mapping based on category
 	switch e.Category {
 	case CategoryDomain:
@@ -187,11 +187,11 @@ func WrapInternal(err error) *AppError {
 // Predefined error constants
 var (
 	// Domain Errors (1000-1999)
-	ErrNotFound   = NewDomainError(1001, "resource not found")
-	ErrWrongInput = NewDomainError(1002, "invalid input")
-	ErrRateLimit  = NewDomainError(1003, "rate limit exceeded")
+	ErrNotFound     = NewDomainError(1001, "resource not found")
+	ErrWrongInput   = NewDomainError(1002, "invalid input")
+	ErrRateLimit    = NewDomainError(1003, "rate limit exceeded")
 	ErrInvalidParam = NewDomainError(1004, "invalid parameter")
-	
+
 	// Authentication Errors (2000-2999)
 	ErrExpired        = NewAuthError(2001, "token expired")
 	ErrWrongAuth      = NewAuthError(2002, "invalid credentials")
@@ -201,18 +201,18 @@ var (
 	ErrNoSemester     = NewAuthError(2006, "semester not found")
 	ErrUserNotFound   = NewAuthError(2007, "user not found")
 	ErrInvalidToken   = NewAuthError(2008, "invalid token")
-	
+
 	// Permission Errors (3000-3999)
-	ErrPermission     = NewPermissionError(3001, "permission denied")
-	ErrAccessDenied   = NewPermissionError(3002, "access denied")
-	ErrUnauthorized   = NewPermissionError(3003, "unauthorized access")
-	
+	ErrPermission   = NewPermissionError(3001, "permission denied")
+	ErrAccessDenied = NewPermissionError(3002, "access denied")
+	ErrUnauthorized = NewPermissionError(3003, "unauthorized access")
+
 	// Validation Errors (4000-4999)
-	ErrValidation     = NewValidationError(4001, "validation failed")
-	ErrInvalidEmail   = NewValidationError(4002, "invalid email format")
+	ErrValidation      = NewValidationError(4001, "validation failed")
+	ErrInvalidEmail    = NewValidationError(4002, "invalid email format")
 	ErrInvalidPassword = NewValidationError(4003, "invalid password format")
 	ErrRequiredField   = NewValidationError(4004, "required field missing")
-	
+
 	// Infrastructure Errors (5000-5999)
 	ErrDB       = NewInfrastructureError(5001, "database error")
 	ErrNetwork  = NewInfrastructureError(5002, "network error")
