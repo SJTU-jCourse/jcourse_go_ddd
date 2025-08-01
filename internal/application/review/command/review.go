@@ -23,14 +23,14 @@ type ReviewCommandService interface {
 type reviewCommandService struct {
 	reviewRepo        review.ReviewRepository
 	courseRepo        review.CourseRepository
-	permissionService permission.ReviewPermissionService
+	permissionService permission.PermissionService
 	eventPublisher    event.Publisher
 }
 
 func NewReviewCommandService(
 	reviewRepo review.ReviewRepository,
 	courseRepo review.CourseRepository,
-	permissionService permission.ReviewPermissionService,
+	permissionService permission.PermissionService,
 	eventPublisher event.Publisher) ReviewCommandService {
 	return &reviewCommandService{
 		reviewRepo:        reviewRepo,
@@ -98,7 +98,12 @@ func (s *reviewCommandService) UpdateReview(commonCtx *common.CommonContext, cmd
 	}
 
 	// Check permission
-	canUpdate, reason := s.permissionService.CanUpdateReview(commonCtx.Ctx, permission.ToPermissionReview(r), commonCtx.User)
+	reviewRef := permission.NewReviewResourceRef(r.ID, r.UserID)
+	result, err := s.permissionService.CheckPermission(commonCtx, reviewRef, permission.ActionUpdate)
+	if err != nil {
+		return apperror.WrapDB(err).WithMetadata("operation", "update_review").WithMetadata("review_id", cmd.ReviewID)
+	}
+	canUpdate, reason := result.Allow, result.Reason
 	if !canUpdate {
 		return apperror.ErrPermission.WithMessage(fmt.Sprintf("cannot update review: %s", reason)).
 			WithMetadata("review_id", cmd.ReviewID).
@@ -144,7 +149,12 @@ func (s *reviewCommandService) DeleteReview(commonCtx *common.CommonContext, cmd
 	}
 
 	// Check permission
-	canDelete, reason := s.permissionService.CanDeleteReview(commonCtx.Ctx, permission.ToPermissionReview(r), commonCtx.User)
+	reviewRef := permission.NewReviewResourceRef(r.ID, r.UserID)
+	result, err := s.permissionService.CheckPermission(commonCtx, reviewRef, permission.ActionDelete)
+	if err != nil {
+		return apperror.WrapDB(err).WithMetadata("operation", "delete_review").WithMetadata("review_id", cmd.ReviewID)
+	}
+	canDelete, reason := result.Allow, result.Reason
 	if !canDelete {
 		return apperror.ErrPermission.WithMessage(fmt.Sprintf("cannot delete review: %s", reason)).
 			WithMetadata("review_id", cmd.ReviewID).
@@ -190,7 +200,7 @@ func (s *reviewCommandService) DeleteReviewAction(commonCtx *common.CommonContex
 			WithMetadata("action_id", actionID)
 	}
 
-	// Check if user owns the review action or is an admin
+	// Get the review action to check ownership
 	action, err := s.reviewRepo.GetReviewAction(commonCtx.Ctx, actionID)
 	if err != nil {
 		return apperror.WrapDB(err).WithMetadata("operation", "get_review_action").WithMetadata("review_id", reviewID).WithMetadata("action_id", actionID)
@@ -201,8 +211,14 @@ func (s *reviewCommandService) DeleteReviewAction(commonCtx *common.CommonContex
 			WithMetadata("action_id", actionID)
 	}
 
-	if commonCtx.User.Role != common.RoleAdmin && action.UserID != commonCtx.User.UserID {
-		return apperror.ErrPermission.WithMessage("user can only delete their own review actions").
+	// Check permission using unified service
+	actionRef := permission.NewReviewActionResourceRef(action.ID, action.UserID)
+	result, err := s.permissionService.CheckPermission(commonCtx, actionRef, permission.ActionDelete)
+	if err != nil {
+		return apperror.WrapDB(err).WithMetadata("operation", "delete_review_action").WithMetadata("review_id", reviewID).WithMetadata("action_id", actionID)
+	}
+	if !result.Allow {
+		return apperror.ErrPermission.WithMessage(fmt.Sprintf("cannot delete review action: %s", result.Reason)).
 			WithMetadata("review_id", reviewID).
 			WithMetadata("action_id", actionID).
 			WithMetadata("user_id", commonCtx.User.UserID).

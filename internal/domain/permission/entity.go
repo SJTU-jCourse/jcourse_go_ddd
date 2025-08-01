@@ -29,10 +29,11 @@ type ResourceOwner struct {
 type ResourceType int
 
 const (
-	ResourceTypeReview ResourceType = iota
-	ResourceTypeUser   ResourceType = iota
-	ResourceTypePoint  ResourceType = iota
-	ResourceTypeCourse ResourceType = iota
+	ResourceTypeReview       ResourceType = iota
+	ResourceTypeReviewAction ResourceType = iota
+	ResourceTypeUser         ResourceType = iota
+	ResourceTypePoint        ResourceType = iota
+	ResourceTypeCourse       ResourceType = iota
 )
 
 type Action int

@@ -72,7 +72,7 @@ func NewServiceContainer(conf config.Config) (*ServiceContainer, error) {
 	statisticsRepo := repository.NewStatisticsRepository(db)
 
 	hasher := password.NewHasher()
-	permissionService := permission.NewReviewPermissionChecker(userRepo)
+	permissionService := permission.NewPermissionService(userRepo)
 
 	codeRepo := repository.NewCodeRepository(db)
 	emailService := email.NewEmailService()

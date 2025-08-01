@@ -65,13 +65,14 @@ func createTestMockUserRepository() *testMockUserRepository {
 
 func TestPermissionService_CheckReviewPermission(t *testing.T) {
 	userRepo := createTestMockUserRepository()
-	permissionService := NewPermissionServiceWithUserRepo(userRepo)
+	permissionService := NewPermissionService(userRepo)
 
 	tests := []struct {
 		name     string
 		ref      ResourceRef
 		action   Action
 		userID   int
+		role     common.Role
 		expected Result
 	}{
 		{
@@ -79,6 +80,7 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionView,
 			userID:   0,
+			role:     "",
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
@@ -86,6 +88,7 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   2,
+			role:     common.RoleUser,
 			expected: Result{Allow: true, Reason: "authenticated user"},
 		},
 		{
@@ -93,6 +96,7 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   2,
+			role:     common.RoleUser,
 			expected: Result{Allow: true, Reason: "owner access"},
 		},
 		{
@@ -100,6 +104,7 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   1,
+			role:     common.RoleAdmin,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
@@ -107,6 +112,7 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   3,
+			role:     common.RoleUser,
 			expected: Result{Allow: false, Reason: "permission denied"},
 		},
 		{
@@ -114,13 +120,20 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeReview, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   0,
+			role:     "",
 			expected: Result{Allow: false, Reason: "not authenticated"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := permissionService.CheckPermission(context.Background(), tt.ref, tt.action, tt.userID)
+			ctx := context.Background()
+			var user *common.User
+			if tt.userID != 0 {
+				user = &common.User{UserID: tt.userID, Role: tt.role}
+			}
+			commonCtx := common.NewCommonContext(ctx, user)
+			result, err := permissionService.CheckPermission(commonCtx, tt.ref, tt.action)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -129,13 +142,14 @@ func TestPermissionService_CheckReviewPermission(t *testing.T) {
 
 func TestPermissionService_CheckUserPermission(t *testing.T) {
 	userRepo := createTestMockUserRepository()
-	permissionService := NewPermissionServiceWithUserRepo(userRepo)
+	permissionService := NewPermissionService(userRepo)
 
 	tests := []struct {
 		name     string
 		ref      ResourceRef
 		action   Action
 		userID   int
+		role     common.Role
 		expected Result
 	}{
 		{
@@ -143,6 +157,7 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionView,
 			userID:   0,
+			role:     "",
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
@@ -150,6 +165,7 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   2,
+			role:     common.RoleUser,
 			expected: Result{Allow: true, Reason: "owner access"},
 		},
 		{
@@ -157,6 +173,7 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   1,
+			role:     common.RoleAdmin,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
@@ -164,13 +181,20 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeUser, Owner: ResourceOwner{ID: 2}},
 			action:   ActionUpdate,
 			userID:   3,
+			role:     common.RoleUser,
 			expected: Result{Allow: false, Reason: "permission denied"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := permissionService.CheckPermission(context.Background(), tt.ref, tt.action, tt.userID)
+			ctx := context.Background()
+			var user *common.User
+			if tt.userID != 0 {
+				user = &common.User{UserID: tt.userID, Role: tt.role}
+			}
+			commonCtx := common.NewCommonContext(ctx, user)
+			result, err := permissionService.CheckPermission(commonCtx, tt.ref, tt.action)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -179,13 +203,14 @@ func TestPermissionService_CheckUserPermission(t *testing.T) {
 
 func TestPermissionService_CheckPointPermission(t *testing.T) {
 	userRepo := createTestMockUserRepository()
-	permissionService := NewPermissionServiceWithUserRepo(userRepo)
+	permissionService := NewPermissionService(userRepo)
 
 	tests := []struct {
 		name     string
 		ref      ResourceRef
 		action   Action
 		userID   int
+		role     common.Role
 		expected Result
 	}{
 		{
@@ -193,6 +218,7 @@ func TestPermissionService_CheckPointPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   1,
+			role:     common.RoleAdmin,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
@@ -200,6 +226,7 @@ func TestPermissionService_CheckPointPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   2,
+			role:     common.RoleUser,
 			expected: Result{Allow: false, Reason: "admin access required"},
 		},
 		{
@@ -207,13 +234,20 @@ func TestPermissionService_CheckPointPermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypePoint, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   0,
-			expected: Result{Allow: false, Reason: "admin access required"},
+			role:     "",
+			expected: Result{Allow: false, Reason: "not authenticated"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := permissionService.CheckPermission(context.Background(), tt.ref, tt.action, tt.userID)
+			ctx := context.Background()
+			var user *common.User
+			if tt.userID != 0 {
+				user = &common.User{UserID: tt.userID, Role: tt.role}
+			}
+			commonCtx := common.NewCommonContext(ctx, user)
+			result, err := permissionService.CheckPermission(commonCtx, tt.ref, tt.action)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
 		})
@@ -222,13 +256,14 @@ func TestPermissionService_CheckPointPermission(t *testing.T) {
 
 func TestPermissionService_CheckCoursePermission(t *testing.T) {
 	userRepo := createTestMockUserRepository()
-	permissionService := NewPermissionServiceWithUserRepo(userRepo)
+	permissionService := NewPermissionService(userRepo)
 
 	tests := []struct {
 		name     string
 		ref      ResourceRef
 		action   Action
 		userID   int
+		role     common.Role
 		expected Result
 	}{
 		{
@@ -236,6 +271,7 @@ func TestPermissionService_CheckCoursePermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionView,
 			userID:   0,
+			role:     "",
 			expected: Result{Allow: true, Reason: "public access"},
 		},
 		{
@@ -243,6 +279,7 @@ func TestPermissionService_CheckCoursePermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   1,
+			role:     common.RoleAdmin,
 			expected: Result{Allow: true, Reason: "admin access"},
 		},
 		{
@@ -250,13 +287,20 @@ func TestPermissionService_CheckCoursePermission(t *testing.T) {
 			ref:      ResourceRef{Type: ResourceTypeCourse, Owner: ResourceOwner{ID: 0}},
 			action:   ActionCreate,
 			userID:   2,
+			role:     common.RoleUser,
 			expected: Result{Allow: false, Reason: "admin access required"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := permissionService.CheckPermission(context.Background(), tt.ref, tt.action, tt.userID)
+			ctx := context.Background()
+			var user *common.User
+			if tt.userID != 0 {
+				user = &common.User{UserID: tt.userID, Role: tt.role}
+			}
+			commonCtx := common.NewCommonContext(ctx, user)
+			result, err := permissionService.CheckPermission(commonCtx, tt.ref, tt.action)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expected, result)
 		})
