@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,23 +11,27 @@ import (
 )
 
 func HandleError(ctx *gin.Context, err error) {
-	if appErr, ok := err.(*apperror.AppError); ok {
-		response := dto.BaseResponse{
-			Code: appErr.Code,
-			Msg:  appErr.Message,
-			Data: nil,
-		}
-		ctx.JSON(appErr.HTTPStatus(), response)
-		return
-	}
-
-	// Handle generic errors
+	// Use the new error handler for consistent responses
+	errorResponse := apperror.HandleError(ctx.Request.Context(), err)
+	
 	response := dto.BaseResponse{
-		Code: apperror.ErrDB.Code,
-		Msg:  apperror.ErrDB.Message,
+		Code: errorResponse.Code,
+		Msg:  errorResponse.Message,
 		Data: nil,
 	}
-	ctx.JSON(apperror.ErrDB.HTTPStatus(), response)
+	
+	// Use user-friendly message if available
+	if errorResponse.UserMessage != "" {
+		response.Msg = errorResponse.UserMessage
+	}
+	
+	// Determine HTTP status from error category
+	var appErr *apperror.AppError
+	if errors.As(err, &appErr) {
+		ctx.JSON(appErr.HTTPStatus(), response)
+	} else {
+		ctx.JSON(http.StatusInternalServerError, response)
+	}
 }
 
 func HandleSuccess(ctx *gin.Context, data any) {

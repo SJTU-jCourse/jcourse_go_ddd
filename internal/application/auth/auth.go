@@ -42,24 +42,27 @@ type authService struct {
 func (s *authService) Login(ctx context.Context, cmd auth.LoginCommand) (*string, error) {
 	user, err := s.userRepo.Get(ctx, cmd.Email)
 	if err != nil {
-		return nil, apperror.ErrWrongAuth
+		return nil, apperror.WrapDB(err).WithMetadata("operation", "login").WithMetadata("email", cmd.Email)
+	}
+	if user == nil {
+		return nil, apperror.ErrWrongAuth.WithUserMessage("Invalid email or password").WithMetadata("email", cmd.Email)
 	}
 	if err := s.hasher.Validate(cmd.Password, user.Password); err != nil {
-		return nil, apperror.ErrWrongAuth
+		return nil, apperror.ErrWrongAuth.WithUserMessage("Invalid email or password").WithMetadata("email", cmd.Email)
 	}
 	if user.IsSuspended() {
-		return nil, apperror.ErrSuspended
+		return nil, apperror.ErrSuspended.WithMetadata("user_id", user.ID)
 	}
 	sessionID, err := s.session.Store(ctx, user.ID)
 	if err != nil {
-		return nil, apperror.ErrSession
+		return nil, apperror.ErrSession.Wrap(err).WithMetadata("operation", "login").WithMetadata("user_id", user.ID)
 	}
 	return &sessionID, nil
 }
 
 func (s *authService) Logout(ctx context.Context, cmd auth.LogoutCommand) error {
 	if err := s.session.Delete(ctx, cmd.SessionID); err != nil {
-		return apperror.ErrSession
+		return apperror.ErrSession.Wrap(err).WithMetadata("operation", "logout").WithMetadata("session_id", cmd.SessionID)
 	}
 	return nil
 }
@@ -81,23 +84,23 @@ func (s *authService) newUserFromRegister(cmd auth.RegisterCommand) *auth.User {
 
 func (s *authService) Register(ctx context.Context, cmd auth.RegisterCommand) (*string, error) {
 	if err := s.codeService.Verify(ctx, cmd.Code, cmd.Email); err != nil {
-		return nil, apperror.ErrWrongAuth
+		return nil, apperror.ErrWrongAuth.Wrap(err).WithMetadata("operation", "register").WithMetadata("email", cmd.Email)
 	}
 	existUser, err := s.userRepo.Get(ctx, cmd.Email)
 	if err != nil {
-		return nil, apperror.ErrDB
+		return nil, apperror.WrapDB(err).WithMetadata("operation", "register").WithMetadata("email", cmd.Email)
 	}
 	if existUser != nil {
-		return nil, apperror.ErrWrongAuth
+		return nil, apperror.ErrWrongAuth.WithUserMessage("Email already registered").WithMetadata("email", cmd.Email)
 	}
 	user := s.newUserFromRegister(cmd)
 	userID, err := s.userRepo.Save(ctx, user)
 	if err != nil {
-		return nil, apperror.ErrDB
+		return nil, apperror.WrapDB(err).WithMetadata("operation", "register").WithMetadata("email", cmd.Email)
 	}
 	sessionID, err := s.session.Store(ctx, userID)
 	if err != nil {
-		return nil, apperror.ErrSession
+		return nil, apperror.ErrSession.Wrap(err).WithMetadata("operation", "register").WithMetadata("user_id", userID)
 	}
 	return &sessionID, nil
 }
@@ -109,12 +112,15 @@ func (s *authService) SendVerificationCode(ctx context.Context, cmd auth.SendVer
 func (s *authService) GetUserFromSession(ctx context.Context, sessionID string) (*common.User, error) {
 	userID, err := s.session.Get(ctx, sessionID)
 	if err != nil {
-		return nil, apperror.ErrSession
+		return nil, apperror.ErrSession.Wrap(err).WithMetadata("operation", "get_user_from_session").WithMetadata("session_id", sessionID)
 	}
 
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, apperror.ErrUserNotFound
+		return nil, apperror.WrapDB(err).WithMetadata("operation", "get_user_from_session").WithMetadata("user_id", userID)
+	}
+	if user == nil {
+		return nil, apperror.ErrUserNotFound.WithMetadata("user_id", userID)
 	}
 
 	return &common.User{
