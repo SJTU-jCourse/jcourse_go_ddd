@@ -18,6 +18,7 @@ type ReviewRepository interface {
 	Delete(ctx context.Context, filter ReviewFilter) error
 	SaveReviewAction(ctx context.Context, action *ReviewAction) error
 	DeleteReviewAction(ctx context.Context, actionID int) error
+	GetReviewAction(ctx context.Context, actionID int) (*ReviewAction, error)
 	GetReviewRevisions(ctx context.Context, reviewID int) ([]ReviewRevision, error)
 }
 

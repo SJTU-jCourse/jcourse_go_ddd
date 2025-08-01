@@ -135,6 +135,18 @@ func (r *reviewRepository) DeleteReviewAction(ctx context.Context, actionID int)
 	return nil
 }
 
+func (r *reviewRepository) GetReviewAction(ctx context.Context, actionID int) (*review.ReviewAction, error) {
+	var actionEntity entity.ReviewAction
+	result := r.db.WithContext(ctx).First(&actionEntity, actionID)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get review action: %w", result.Error)
+	}
+	return r.toDomainReviewAction(&actionEntity), nil
+}
+
 func (r *reviewRepository) GetReviewRevisions(ctx context.Context, reviewID int) ([]review.ReviewRevision, error) {
 	var revisionEntitys []entity.ReviewRevision
 	result := r.db.WithContext(ctx).Where("review_id = ?", reviewID).Find(&revisionEntitys)
@@ -190,6 +202,15 @@ func (r *reviewRepository) toDomainReviewRevision(revisionEntity *entity.ReviewR
 		Rating:   3,           // Default rating
 		Semester: "2023-Fall", // Default semester
 		Grade:    "A",         // Default grade
+	}
+}
+
+func (r *reviewRepository) toDomainReviewAction(actionEntity *entity.ReviewAction) *review.ReviewAction {
+	return &review.ReviewAction{
+		ID:         actionEntity.ID,
+		ReviewID:   actionEntity.ReviewID,
+		UserID:     actionEntity.UserID,
+		ActionType: actionEntity.Action,
 	}
 }
 

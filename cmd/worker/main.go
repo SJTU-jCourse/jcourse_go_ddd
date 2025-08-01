@@ -2,14 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"jcourse_go/internal/app"
 	"jcourse_go/internal/config"
@@ -18,7 +15,7 @@ import (
 
 func main() {
 	// Load configuration
-	cfg, err := loadConfig()
+	cfg, err := config.LoadFromEnv()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
@@ -66,26 +63,4 @@ func main() {
 	time.Sleep(5 * time.Second)
 
 	log.Println("Worker service stopped")
-}
-
-func loadConfig() (*config.Config, error) {
-	// Get config path from environment or use default
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "./config/config.yaml"
-	}
-
-	// Read config file
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	// Parse YAML
-	var cfg config.Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	return &cfg, nil
 }
