@@ -22,19 +22,33 @@ func (r *statisticsRepository) GetSystemStatistics(ctx context.Context) (*statis
 	stats := &statistics.SystemStatistics{}
 
 	// Get DAU (Daily Active Users)
-	err := r.db.Raw("SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE DATE(created_at) = CURRENT_DATE").Scan(&stats.DAU).Error
+	var dau int64
+	err := r.db.Model(&entity.UserSession{}).
+		Where("DATE(created_at) = CURRENT_DATE").
+		Distinct("user_id").
+		Count(&dau).Error
+	stats.DAU = int(dau)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get DAU: %w", err)
 	}
 
 	// Get MAU (Monthly Active Users)
-	err = r.db.Raw("SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)").Scan(&stats.MAU).Error
+	var mau int64
+	err = r.db.Model(&entity.UserSession{}).
+		Where("created_at >= DATE_TRUNC('month', CURRENT_DATE)").
+		Distinct("user_id").
+		Count(&mau).Error
+	stats.MAU = int(mau)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MAU: %w", err)
 	}
 
 	// Get Daily New Reviews
-	err = r.db.Raw("SELECT COUNT(*) FROM reviews WHERE DATE(created_at) = CURRENT_DATE").Scan(&stats.DailyNewReviews).Error
+	var dailyReviews int64
+	err = r.db.Model(&entity.Review{}).
+		Where("DATE(created_at) = CURRENT_DATE").
+		Count(&dailyReviews).Error
+	stats.DailyNewReviews = int(dailyReviews)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get daily new reviews: %w", err)
 	}
@@ -56,7 +70,11 @@ func (r *statisticsRepository) GetSystemStatistics(ctx context.Context) (*statis
 	stats.TotalReviews = int(totalReviews)
 
 	// Get Courses with Reviews
-	err = r.db.Raw("SELECT COUNT(DISTINCT course_id) FROM reviews").Scan(&stats.CoursesWithReviews).Error
+	var coursesWithReviews int64
+	err = r.db.Model(&entity.Review{}).
+		Distinct("course_id").
+		Count(&coursesWithReviews).Error
+	stats.CoursesWithReviews = int(coursesWithReviews)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get courses with reviews: %w", err)
 	}

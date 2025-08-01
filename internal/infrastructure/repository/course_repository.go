@@ -146,7 +146,11 @@ func (r *courseRepository) GetUserEnrolledCourses(ctx context.Context, userID in
 
 func (r *courseRepository) AddUserEnrolledCourse(ctx context.Context, userID int, courseID int) error {
 	result := r.db.WithContext(ctx).
-		Exec("INSERT INTO user_enrolled_courses (user_id, course_id) VALUES (?, ?) ON CONFLICT (user_id, course_id) DO NOTHING", userID, courseID)
+		Create(&entity.UserEnrolledCourse{
+			UserID:   userID,
+			CourseID: courseID,
+			Semester: "",
+		})
 	if result.Error != nil {
 		return fmt.Errorf("failed to add user enrolled course: %w", result.Error)
 	}
@@ -156,13 +160,17 @@ func (r *courseRepository) AddUserEnrolledCourse(ctx context.Context, userID int
 func (r *courseRepository) WatchCourse(ctx context.Context, userID int, courseID int, watch bool) error {
 	if watch {
 		result := r.db.WithContext(ctx).
-			Exec("INSERT INTO course_watches (user_id, course_id) VALUES (?, ?) ON CONFLICT (user_id, course_id) DO NOTHING", userID, courseID)
+			Create(&entity.CourseWatch{
+				UserID:   userID,
+				CourseID: courseID,
+			})
 		if result.Error != nil {
 			return fmt.Errorf("failed to watch course: %w", result.Error)
 		}
 	} else {
 		result := r.db.WithContext(ctx).
-			Exec("DELETE FROM course_watches WHERE user_id = ? AND course_id = ?", userID, courseID)
+			Where("user_id = ? AND course_id = ?", userID, courseID).
+			Delete(&entity.CourseWatch{})
 		if result.Error != nil {
 			return fmt.Errorf("failed to unwatch course: %w", result.Error)
 		}
