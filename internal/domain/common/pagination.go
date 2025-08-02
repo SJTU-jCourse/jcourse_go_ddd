@@ -5,16 +5,23 @@ type Pagination struct {
 	Size int
 }
 
+const (
+	DefaultPage       = 1
+	DefaultPageSize   = 20
+	MinimumPageSize   = 1
+	MinimumPageNumber = 1
+)
+
 func (p *Pagination) Offset() int {
 	return (p.Page - 1) * p.Size
 }
 
 func NewPagination(page int, size int) Pagination {
-	if page < 1 {
-		page = 1
+	if page < MinimumPageNumber {
+		page = DefaultPage
 	}
-	if size < 1 {
-		size = 20
+	if size < MinimumPageSize {
+		size = DefaultPageSize
 	}
 	return Pagination{
 		Page: page,

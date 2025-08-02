@@ -12,6 +12,13 @@ import (
 	"jcourse_go/pkg/apperror"
 )
 
+const (
+	RateLimitWindow      = time.Minute
+	MaxReviewsPerMinute  = 3
+	MaxSimilarityCheck   = 3
+	MaxSimilarityThreshold = 0.9
+)
+
 type ReviewCommandService interface {
 	WriteReview(commonCtx *common.CommonContext, cmd *review.WriteReviewCommand) error
 	UpdateReview(commonCtx *common.CommonContext, cmd *review.UpdateReviewCommand) error
@@ -233,7 +240,7 @@ func (s *reviewCommandService) DeleteReviewAction(commonCtx *common.CommonContex
 
 func (s *reviewCommandService) checkRateLimit(commonCtx *common.CommonContext, userID int) error {
 	// Find reviews created in the last minute
-	oneMinuteAgo := time.Now().Add(-time.Minute)
+	oneMinuteAgo := time.Now().Add(-RateLimitWindow)
 	filter := review.ReviewFilter{
 		UserID: &userID,
 	}
@@ -251,11 +258,11 @@ func (s *reviewCommandService) checkRateLimit(commonCtx *common.CommonContext, u
 		}
 	}
 
-	if recentCount >= 3 {
+	if recentCount >= MaxReviewsPerMinute {
 		return apperror.ErrRateLimit.WithMessage("rate limit exceeded: maximum 3 reviews per minute").
 			WithMetadata("user_id", userID).
 			WithMetadata("recent_count", recentCount).
-			WithMetadata("limit", 3)
+			WithMetadata("limit", MaxReviewsPerMinute)
 	}
 
 	return nil
@@ -278,14 +285,14 @@ func (s *reviewCommandService) checkContentSimilarity(commonCtx *common.CommonCo
 	})
 
 	// Check similarity with last 3 reviews
-	maxCheck := min(3, len(reviews))
+	maxCheck := min(MaxSimilarityCheck, len(reviews))
 	for i := 0; i < maxCheck; i++ {
 		similarity := calculateSimilarity(content, reviews[i].Comment)
-		if similarity > 0.9 {
+		if similarity > MaxSimilarityThreshold {
 			return apperror.ErrValidation.WithMessage("content similarity too high with recent review").
 				WithMetadata("user_id", userID).
 				WithMetadata("similarity", similarity).
-				WithMetadata("max_similarity", 0.9).
+				WithMetadata("max_similarity", MaxSimilarityThreshold).
 				WithMetadata("compared_review_id", reviews[i].ID)
 		}
 	}

@@ -10,6 +10,11 @@ import (
 	"jcourse_go/pkg/apperror"
 )
 
+const (
+	SuccessCode      = 0
+	ResponseSuccess  = "success"
+)
+
 func HandleError(ctx *gin.Context, err error) {
 	// Use the new error handler for consistent responses
 	errorResponse := apperror.HandleError(ctx.Request.Context(), err)
@@ -36,8 +41,8 @@ func HandleError(ctx *gin.Context, err error) {
 
 func HandleSuccess(ctx *gin.Context, data any) {
 	response := dto.BaseResponse{
-		Code: 0,
-		Msg:  "success",
+		Code: SuccessCode,
+		Msg:  ResponseSuccess,
 		Data: data,
 	}
 	ctx.JSON(http.StatusOK, response)
@@ -45,8 +50,8 @@ func HandleSuccess(ctx *gin.Context, data any) {
 
 func HandleSuccessWithStatus(ctx *gin.Context, statusCode int, data any) {
 	response := dto.BaseResponse{
-		Code: 0,
-		Msg:  "success",
+		Code: SuccessCode,
+		Msg:  ResponseSuccess,
 		Data: data,
 	}
 	ctx.JSON(statusCode, response)

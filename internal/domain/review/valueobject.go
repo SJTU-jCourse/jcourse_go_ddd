@@ -23,16 +23,21 @@ func (r *Rating) Int() int {
 }
 
 func NewRating(val int) Rating {
-	if val < 1 {
-		return 1
+	if val < MinRating {
+		return MinRating
 	}
-	if val > 5 {
-		return 5
+	if val > MaxRating {
+		return MaxRating
 	}
 	return Rating(val)
 }
 
 type Category string
+
+const (
+	MinRating = 1
+	MaxRating = 5
+)
 
 type ReviewContent struct {
 	Comment  string

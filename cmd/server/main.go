@@ -20,6 +20,17 @@ import (
 	"jcourse_go/internal/interface/web"
 )
 
+const (
+	SuccessCode           = 0
+	SuccessMessage        = "success"
+	DefaultPort           = "8080"
+	ShutdownTimeout       = 30 * time.Second
+	WorkerCleanupDelay    = 5 * time.Second
+	SignalChannelCapacity = 1
+	HealthCheckEndpoint   = "/health"
+	HTTPStatusOK          = 200
+)
+
 func loadConfiguration() *config.Config {
 	cfg, err := config.LoadFromEnv()
 	if err != nil {
@@ -90,18 +101,18 @@ func setupHTTPServer(serviceContainer *app.ServiceContainer) *http.Server {
 	web.RegisterRouter(router, serviceContainer)
 
 	// Add health check endpoint
-	router.GET("/health", func(c *gin.Context) {
+	router.GET(HealthCheckEndpoint, func(c *gin.Context) {
 		response := dto.BaseResponse{
-			Code: 0,
-			Msg:  "success",
+			Code: SuccessCode,
+			Msg:  SuccessMessage,
 		}
-		c.JSON(200, response)
+		c.JSON(HTTPStatusOK, response)
 	})
 
 	// Get port from environment or use default
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = DefaultPort
 	}
 
 	// Start server
@@ -125,7 +136,7 @@ func waitForShutdown(server *http.Server, sigChan chan os.Signal, cancel context
 	cancel()
 
 	// Create shutdown context with timeout
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), ShutdownTimeout)
 	defer shutdownCancel()
 
 	// Gracefully shutdown the server
@@ -136,7 +147,7 @@ func waitForShutdown(server *http.Server, sigChan chan os.Signal, cancel context
 	}
 
 	// Give workers time to clean up
-	time.Sleep(5 * time.Second)
+	time.Sleep(WorkerCleanupDelay)
 	log.Println("All services stopped")
 }
 
@@ -157,7 +168,7 @@ func main() {
 	defer cancel()
 
 	// Setup signal handling
-	sigChan := make(chan os.Signal, 1)
+	sigChan := make(chan os.Signal, SignalChannelCapacity)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// Start background workers if event system is enabled

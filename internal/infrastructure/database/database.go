@@ -11,6 +11,12 @@ import (
 	"jcourse_go/internal/config"
 )
 
+const (
+	MaxIdleConns     = 10
+	MaxOpenConns     = 100
+	ConnMaxLifetime  = time.Hour
+)
+
 func NewDatabase(cfg config.DBConfig) (*gorm.DB, error) {
 	dsn := cfg.DSN
 
@@ -26,9 +32,9 @@ func NewDatabase(cfg config.DBConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	sqlDB.SetMaxIdleConns(MaxIdleConns)
+	sqlDB.SetMaxOpenConns(MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(ConnMaxLifetime)
 
 	return db, nil
 }

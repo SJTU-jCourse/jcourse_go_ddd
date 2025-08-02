@@ -10,6 +10,10 @@ import (
 	"jcourse_go/internal/domain/auth"
 )
 
+const (
+	SessionExpiration = 24 * time.Hour
+)
+
 type sessionRepository struct {
 	redis *redis.Client
 }
@@ -21,7 +25,7 @@ func NewSessionRepository(redisClient *redis.Client) auth.SessionRepository {
 func (r *sessionRepository) Store(ctx context.Context, userID int) (string, error) {
 	sessionID := fmt.Sprintf("session:%d:%d", userID, time.Now().Unix())
 
-	err := r.redis.Set(ctx, sessionID, userID, 24*time.Hour).Err()
+	err := r.redis.Set(ctx, sessionID, userID, SessionExpiration).Err()
 	if err != nil {
 		return "", fmt.Errorf("failed to store session: %w", err)
 	}

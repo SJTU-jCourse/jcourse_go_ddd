@@ -9,6 +9,12 @@ import (
 	"jcourse_go/internal/application/statistics/service"
 )
 
+const (
+	StatisticsWorkerTicker = 24 * time.Hour
+	StatisticsWorkerDelay  = 5 * time.Second
+	DateFormat            = "2006-01-02"
+)
+
 // StatisticsWorker handles periodic statistics calculation
 type StatisticsWorker struct {
 	serviceContainer  *app.ServiceContainer
@@ -26,7 +32,7 @@ func (w *StatisticsWorker) Start(ctx context.Context) {
 	log.Println("Statistics worker started")
 
 	// Run daily statistics calculation at midnight
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.NewTicker(StatisticsWorkerTicker)
 	defer ticker.Stop()
 
 	// Calculate statistics for today on startup
@@ -52,9 +58,9 @@ func (w *StatisticsWorker) calculateDailyStatistics(ctx context.Context) {
 
 	err := w.dailyStatsService.CalculateAndSaveDailyStatistics(ctx, yesterday)
 	if err != nil {
-		log.Printf("Failed to calculate daily statistics for %v: %v", yesterday.Format("2006-01-02"), err)
+		log.Printf("Failed to calculate daily statistics for %v: %v", yesterday.Format(DateFormat), err)
 		return
 	}
 
-	log.Printf("Successfully calculated daily statistics for %v", yesterday.Format("2006-01-02"))
+	log.Printf("Successfully calculated daily statistics for %v", yesterday.Format(DateFormat))
 }
