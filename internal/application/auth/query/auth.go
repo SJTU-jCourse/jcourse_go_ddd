@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	"jcourse_go/internal/application/auth"
+	"jcourse_go/internal/application/viewobject"
 	domainauth "jcourse_go/internal/domain/auth"
 	"jcourse_go/internal/domain/common"
 	"jcourse_go/pkg/apperror"
@@ -11,7 +11,7 @@ import (
 
 type AuthQueryService interface {
 	GetUserFromSession(ctx context.Context, sessionID string) (*common.User, error)
-	GetUserInfo(ctx context.Context, userID int) (*auth.UserInfoVO, error)
+	GetUserInfo(ctx context.Context, userID int) (*viewobject.UserInfoVO, error)
 }
 
 type authQueryService struct {
@@ -49,7 +49,7 @@ func (s *authQueryService) GetUserFromSession(ctx context.Context, sessionID str
 	}, nil
 }
 
-func (s *authQueryService) GetUserInfo(ctx context.Context, userID int) (*auth.UserInfoVO, error) {
+func (s *authQueryService) GetUserInfo(ctx context.Context, userID int) (*viewobject.UserInfoVO, error) {
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, apperror.WrapDB(err).WithMetadata("operation", "get_user_info").WithMetadata("user_id", userID)
@@ -58,7 +58,7 @@ func (s *authQueryService) GetUserInfo(ctx context.Context, userID int) (*auth.U
 		return nil, apperror.ErrUserNotFound.WithMetadata("user_id", userID)
 	}
 
-	return &auth.UserInfoVO{
+	return &viewobject.UserInfoVO{
 		UserID:      user.ID,
 		Username:    user.Username,
 		Email:       user.Email,
