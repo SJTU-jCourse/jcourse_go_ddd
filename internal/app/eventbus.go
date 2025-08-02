@@ -16,7 +16,7 @@ type EventBusSetup struct {
 }
 
 // SetupEventBus creates and configures the eventbus, but doesn't start it
-func SetupEventBus(conf config.Config) (*EventBusSetup, error) {
+func SetupEventBus(conf config.Config, serviceContainer *ServiceContainer) (*EventBusSetup, error) {
 	if !conf.Event.Enabled {
 		return &EventBusSetup{
 			EventBus: nil,
@@ -35,7 +35,7 @@ func SetupEventBus(conf config.Config) (*EventBusSetup, error) {
 	}
 
 	// Register event handlers
-	if err := eventhandler.RegisterEventHandlers(eventBus); err != nil {
+	if err := eventhandler.RegisterEventHandlers(eventBus, serviceContainer.GetPointCommandService()); err != nil {
 		return nil, err
 	}
 

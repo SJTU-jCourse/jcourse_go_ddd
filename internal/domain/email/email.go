@@ -26,7 +26,7 @@ type EmailService interface {
 
 // EmailServiceImpl implements EmailService interface
 type EmailServiceImpl struct {
-	sender    Sender
+	sender   Sender
 	template Template
 }
 
@@ -37,7 +37,7 @@ func NewEmailService() EmailService {
 // NewEmailServiceImpl creates a new email service with sender and template
 func NewEmailServiceImpl(sender Sender, template Template) EmailService {
 	return &EmailServiceImpl{
-		sender:    sender,
+		sender:   sender,
 		template: template,
 	}
 }

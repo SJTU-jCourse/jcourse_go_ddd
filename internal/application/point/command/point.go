@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"jcourse_go/internal/domain/common"
 	"jcourse_go/internal/domain/point"
 	"jcourse_go/pkg/apperror"
@@ -9,6 +10,7 @@ import (
 type PointCommandService interface {
 	CreatePoint(commonCtx *common.CommonContext, userID int, amount int, reason string) error
 	Transaction(commonCtx *common.CommonContext, fromUserID int, toUserID int, amount int, reason string) error
+	AwardPointsForReview(commonCtx *common.CommonContext, userID int, reviewID int) error
 }
 
 func NewPointCommandService(repo point.UserPointRepository) PointCommandService {
@@ -66,6 +68,27 @@ func (s *pointCommandService) Transaction(commonCtx *common.CommonContext, fromU
 		return apperror.WrapDB(err).WithMetadata("operation", "point_transaction_to").
 			WithMetadata("to_user_id", toUserID).
 			WithMetadata("amount", amount)
+	}
+
+	return nil
+}
+
+// AwardPointsForReview awards points to a user for creating a review (internal system operation)
+func (s *pointCommandService) AwardPointsForReview(commonCtx *common.CommonContext, userID int, reviewID int) error {
+	// Define points to award for review creation
+	const reviewCreationPoints = 10
+
+	// Create point record with description
+	reason := fmt.Sprintf("Points awarded for creating review #%d", reviewID)
+	pointRecord := point.NewUserPointRecord(userID, reviewCreationPoints, reason)
+
+	// Save the point record
+	if err := s.repo.Save(commonCtx.Ctx, &pointRecord); err != nil {
+		return apperror.WrapDB(err).
+			WithMetadata("operation", "award_points_for_review").
+			WithMetadata("user_id", userID).
+			WithMetadata("review_id", reviewID).
+			WithMetadata("points", reviewCreationPoints)
 	}
 
 	return nil

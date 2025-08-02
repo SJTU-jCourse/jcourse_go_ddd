@@ -19,6 +19,7 @@ import (
 	emailimpl "jcourse_go/internal/infrastructure/email"
 	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
+	"jcourse_go/internal/domain/point"
 	"jcourse_go/pkg/password"
 
 	"github.com/go-redis/redis/v8"
@@ -107,6 +108,18 @@ func NewServiceContainer(conf config.Config, eventPublisher event.Publisher) (*S
 	}
 
 	return container, nil
+}
+
+// GetPointCommandService returns the point command service
+func (c *ServiceContainer) GetPointCommandService() pointcommand.PointCommandService {
+	return c.PointCommandService
+}
+
+// GetUserPointRepository returns the user point repository
+func (c *ServiceContainer) GetUserPointRepository() point.UserPointRepository {
+	// The repository is created in the constructor but not stored as a field
+	// We need to recreate it or store it as a field
+	return repository.NewUserPointRepository(c.DB)
 }
 
 func (c *ServiceContainer) Close() error {

@@ -1,109 +1,13 @@
+// Package handler contains event handlers for domain events.
+// This package has been refactored to follow proper DDD architecture:
+// - Event handlers are split into individual files
+// - Handlers use application services instead of repositories directly
+// - Each handler has a single responsibility
+//
+// See individual files:
+// - review_event_handler.go: Handles review-related events
+// - point_event_handler.go: Handles point awarding events
+// - statistics_event_handler.go: Handles statistics update events
+// - noop_handler.go: No-operation handler
+// - registration.go: Event handler registration
 package handler
-
-import (
-	"context"
-	"fmt"
-	"log"
-
-	"jcourse_go/internal/domain/event"
-)
-
-type ReviewEventHandler struct{}
-
-func NewReviewEventHandler() *ReviewEventHandler {
-	return &ReviewEventHandler{}
-}
-
-func (h *ReviewEventHandler) Handle(ctx context.Context, e event.Event) error {
-	payload, ok := e.Payload().(*event.ReviewPayload)
-	if !ok {
-		return fmt.Errorf("invalid payload type for review event")
-	}
-
-	switch e.Type() {
-	case event.TypeReviewCreated:
-		log.Printf("Review created event: ReviewID=%d, UserID=%d, CourseID=%d, Rating=%d",
-			payload.ReviewID, payload.UserID, payload.CourseID, payload.Rating)
-	case event.TypeReviewModified:
-		log.Printf("Review modified event: ReviewID=%d, UserID=%d, CourseID=%d, Rating=%d",
-			payload.ReviewID, payload.UserID, payload.CourseID, payload.Rating)
-	default:
-		return fmt.Errorf("unsupported review event type: %d", e.Type())
-	}
-
-	return nil
-}
-
-type PointEventHandler struct{}
-
-func NewPointEventHandler() *PointEventHandler {
-	return &PointEventHandler{}
-}
-
-func (h *PointEventHandler) Handle(ctx context.Context, e event.Event) error {
-	payload, ok := e.Payload().(*event.ReviewPayload)
-	if !ok {
-		return fmt.Errorf("invalid payload type for point event")
-	}
-
-	if e.Type() == event.TypeReviewCreated {
-		log.Printf("Awarding points for review creation: UserID=%d, ReviewID=%d",
-			payload.UserID, payload.ReviewID)
-	}
-
-	return nil
-}
-
-type StatisticsEventHandler struct{}
-
-func NewStatisticsEventHandler() *StatisticsEventHandler {
-	return &StatisticsEventHandler{}
-}
-
-func (h *StatisticsEventHandler) Handle(ctx context.Context, e event.Event) error {
-	payload, ok := e.Payload().(*event.ReviewPayload)
-	if !ok {
-		return fmt.Errorf("invalid payload type for statistics event")
-	}
-
-	switch e.Type() {
-	case event.TypeReviewCreated:
-		log.Printf("Updating statistics for new review: CourseID=%d", payload.CourseID)
-	case event.TypeReviewModified:
-		log.Printf("Updating statistics for modified review: CourseID=%d", payload.CourseID)
-	}
-
-	return nil
-}
-
-type NoOpHandler struct{}
-
-func NewNoOpHandler() *NoOpHandler {
-	return &NoOpHandler{}
-}
-
-func (h *NoOpHandler) Handle(ctx context.Context, e event.Event) error {
-	return nil
-}
-
-// RegisterEventHandlers registers all event handlers with the event bus
-func RegisterEventHandlers(eventBus event.EventBusPublisher) error {
-	reviewHandler := NewReviewEventHandler()
-	pointHandler := NewPointEventHandler()
-	statsHandler := NewStatisticsEventHandler()
-
-	if err := eventBus.Register(event.TypeReviewCreated, reviewHandler); err != nil {
-		return err
-	}
-	if err := eventBus.Register(event.TypeReviewModified, reviewHandler); err != nil {
-		return err
-	}
-	if err := eventBus.Register(event.TypeReviewCreated, pointHandler); err != nil {
-		return err
-	}
-	if err := eventBus.Register(event.TypeReviewModified, statsHandler); err != nil {
-		return err
-	}
-
-	return nil
-}

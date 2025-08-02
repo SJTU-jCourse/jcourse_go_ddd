@@ -34,20 +34,20 @@ func loadConfiguration() *config.Config {
 	return cfg
 }
 
-func setupEventbus(cfg *config.Config) *app.EventBusSetup {
-	eventBusSetup, err := app.SetupEventBus(*cfg)
-	if err != nil {
-		log.Fatalf("Failed to setup eventbus: %v", err)
-	}
-	return eventBusSetup
-}
-
 func setupServiceContainer(cfg *config.Config, eventPublisher event.Publisher) *app.ServiceContainer {
 	serviceContainer, err := app.NewServiceContainer(*cfg, eventPublisher)
 	if err != nil {
 		log.Fatalf("Failed to initialize service container: %v", err)
 	}
 	return serviceContainer
+}
+
+func setupEventbus(cfg *config.Config, serviceContainer *app.ServiceContainer) *app.EventBusSetup {
+	eventBusSetup, err := app.SetupEventBus(*cfg, serviceContainer)
+	if err != nil {
+		log.Fatalf("Failed to setup eventbus: %v", err)
+	}
+	return eventBusSetup
 }
 
 func startBackgroundWorkers(ctx context.Context, cfg *config.Config, eventBusSetup *app.EventBusSetup, serviceContainer *app.ServiceContainer) {
@@ -144,13 +144,13 @@ func main() {
 	// Load configuration
 	cfg := loadConfiguration()
 
-	// Setup eventbus (similar to Gin router setup)
-	eventBusSetup := setupEventbus(cfg)
-	defer eventBusSetup.ShutdownEventBus()
-
-	// Initialize service container with event publisher
-	serviceContainer := setupServiceContainer(cfg, eventBusSetup.GetPublisher())
+	// Initialize service container first
+	serviceContainer := setupServiceContainer(cfg, nil)
 	defer serviceContainer.Close()
+
+	// Setup eventbus using service container
+	eventBusSetup := setupEventbus(cfg, serviceContainer)
+	defer eventBusSetup.ShutdownEventBus()
 
 	// Create context with cancellation for background tasks
 	ctx, cancel := context.WithCancel(context.Background())

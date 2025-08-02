@@ -46,7 +46,7 @@ func (s *SMTPSender) Send(ctx context.Context, emailAddr string, email email.Ren
 
 	// Use channel to handle the blocking send operation
 	resultChan := make(chan error, 1)
-	
+
 	go func() {
 		resultChan <- s.dialer.DialAndSend(m)
 	}()
