@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	SuccessCode      = 0
-	ResponseSuccess  = "success"
+	SuccessCode     = 0
+	ResponseSuccess = "success"
 )
 
 func HandleError(ctx *gin.Context, err error) {

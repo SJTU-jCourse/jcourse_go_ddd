@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+
 	"jcourse_go/internal/domain/common"
 	"jcourse_go/internal/domain/point"
 	"jcourse_go/pkg/apperror"

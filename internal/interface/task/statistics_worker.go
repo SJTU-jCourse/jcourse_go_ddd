@@ -12,7 +12,7 @@ import (
 const (
 	StatisticsWorkerTicker = 24 * time.Hour
 	StatisticsWorkerDelay  = 5 * time.Second
-	DateFormat            = "2006-01-02"
+	DateFormat             = "2006-01-02"
 )
 
 // StatisticsWorker handles periodic statistics calculation

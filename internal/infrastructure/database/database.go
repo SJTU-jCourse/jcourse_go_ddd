@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	MaxIdleConns     = 10
-	MaxOpenConns     = 100
-	ConnMaxLifetime  = time.Hour
+	MaxIdleConns    = 10
+	MaxOpenConns    = 100
+	ConnMaxLifetime = time.Hour
 )
 
 func NewDatabase(cfg config.DBConfig) (*gorm.DB, error) {

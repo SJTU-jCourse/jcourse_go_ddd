@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	RateLimitWindow      = time.Minute
-	MaxReviewsPerMinute  = 3
-	MaxSimilarityCheck   = 3
+	RateLimitWindow        = time.Minute
+	MaxReviewsPerMinute    = 3
+	MaxSimilarityCheck     = 3
 	MaxSimilarityThreshold = 0.9
 )
 

@@ -15,11 +15,11 @@ import (
 	"jcourse_go/internal/domain/email"
 	"jcourse_go/internal/domain/event"
 	"jcourse_go/internal/domain/permission"
+	"jcourse_go/internal/domain/point"
 	"jcourse_go/internal/infrastructure/database"
 	emailimpl "jcourse_go/internal/infrastructure/email"
 	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
-	"jcourse_go/internal/domain/point"
 	"jcourse_go/pkg/password"
 
 	"github.com/go-redis/redis/v8"

@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"testing"
-	
+
 	"jcourse_go/internal/domain/common"
 	"jcourse_go/internal/domain/event"
 	"jcourse_go/pkg/apperror"
-	
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,7 +36,7 @@ func TestPointEventHandler_HandleReviewCreated(t *testing.T) {
 	// Setup
 	mockService := new(MockPointCommandService)
 	handler := NewPointEventHandler(mockService)
-	
+
 	// Create test event
 	payload := &event.ReviewPayload{
 		ReviewID: 123,
@@ -46,17 +46,17 @@ func TestPointEventHandler_HandleReviewCreated(t *testing.T) {
 		Content:  "Great course!",
 		Action:   "created",
 	}
-	
+
 	event := event.NewBaseEvent(event.TypeReviewCreated, payload)
-	
+
 	// Expect the AwardPointsForReview method to be called with correct parameters
 	mockService.On("AwardPointsForReview", mock.MatchedBy(func(ctx *common.CommonContext) bool {
 		return ctx.User.UserID == 0 && ctx.User.Role == common.RoleAdmin // System user
 	}), 456, 123).Return(nil)
-	
+
 	// Execute
 	err := handler.Handle(context.Background(), event)
-	
+
 	// Assert
 	assert.NoError(t, err)
 	mockService.AssertExpectations(t)
@@ -73,14 +73,14 @@ func TestPointEventHandler_HandleInvalidPayload(t *testing.T) {
 	// Setup
 	mockService := new(MockPointCommandService)
 	handler := NewPointEventHandler(mockService)
-	
+
 	// Create event with invalid payload type
 	invalidPayload := &MockInvalidPayload{}
 	event := event.NewBaseEvent(event.TypeReviewCreated, invalidPayload)
-	
+
 	// Execute
 	err := handler.Handle(context.Background(), event)
-	
+
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid payload type")
@@ -91,7 +91,7 @@ func TestPointEventHandler_HandleReviewModified(t *testing.T) {
 	// Setup
 	mockService := new(MockPointCommandService)
 	handler := NewPointEventHandler(mockService)
-	
+
 	// Create test event for modified review
 	payload := &event.ReviewPayload{
 		ReviewID: 123,
@@ -101,12 +101,12 @@ func TestPointEventHandler_HandleReviewModified(t *testing.T) {
 		Content:  "Updated review",
 		Action:   "modified",
 	}
-	
+
 	event := event.NewBaseEvent(event.TypeReviewModified, payload)
-	
+
 	// Execute
 	err := handler.Handle(context.Background(), event)
-	
+
 	// Assert
 	assert.NoError(t, err)
 	// AwardPointsForReview should not be called for modified reviews
@@ -117,7 +117,7 @@ func TestPointEventHandler_HandleSaveError(t *testing.T) {
 	// Setup
 	mockService := new(MockPointCommandService)
 	handler := NewPointEventHandler(mockService)
-	
+
 	// Create test event
 	payload := &event.ReviewPayload{
 		ReviewID: 123,
@@ -127,15 +127,15 @@ func TestPointEventHandler_HandleSaveError(t *testing.T) {
 		Content:  "Great course!",
 		Action:   "created",
 	}
-	
+
 	event := event.NewBaseEvent(event.TypeReviewCreated, payload)
-	
+
 	// Expect the AwardPointsForReview method to be called and return an error
 	mockService.On("AwardPointsForReview", mock.AnythingOfType("*common.CommonContext"), 456, 123).Return(apperror.ErrDB)
-	
+
 	// Execute
 	err := handler.Handle(context.Background(), event)
-	
+
 	// Assert
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "database error")
