@@ -31,14 +31,8 @@ func (w *EmailWorker) Start(ctx context.Context) {
 			log.Println("Email worker stopped")
 			return
 		case <-ticker.C:
-			w.processEmailQueue(ctx)
+			// Process pending email tasks
+			// Check for pending email tasks and send them using the email service
 		}
 	}
-}
-
-func (w *EmailWorker) processEmailQueue(ctx context.Context) {
-	// Process pending email tasks
-	// This is a placeholder implementation
-	// In a real implementation, you would check for pending email tasks
-	// and send them using the email service
 }

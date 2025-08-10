@@ -31,15 +31,10 @@ func (w *CleanupWorker) Start(ctx context.Context) {
 			log.Println("Cleanup worker stopped")
 			return
 		case <-ticker.C:
-			w.performCleanup(ctx)
+			// Perform cleanup tasks like:
+			// - Delete expired verification codes
+			// - Clean up old logs
+			// - Archive old data
 		}
 	}
-}
-
-func (w *CleanupWorker) performCleanup(ctx context.Context) {
-	// Perform cleanup tasks like:
-	// - Delete expired verification codes
-	// - Clean up old logs
-	// - Archive old data
-	// This is a placeholder implementation
 }
