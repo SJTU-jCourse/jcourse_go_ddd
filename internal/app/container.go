@@ -18,17 +18,14 @@ import (
 	"jcourse_go/internal/domain/point"
 	"jcourse_go/internal/infrastructure/database"
 	emailimpl "jcourse_go/internal/infrastructure/email"
-	redisclient "jcourse_go/internal/infrastructure/redis"
 	"jcourse_go/internal/infrastructure/repository"
 	"jcourse_go/pkg/password"
 
-	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
 type ServiceContainer struct {
-	DB    *gorm.DB
-	Redis *redis.Client
+	DB *gorm.DB
 
 	AuthCommandService       authcommand.AuthCommandService
 	AuthQueryService         authquery.AuthQueryService
@@ -52,18 +49,13 @@ func NewServiceContainer(conf config.Config, eventPublisher event.Publisher) (*S
 		return nil, err
 	}
 
-	redisClient, err := redisclient.NewRedisClient(conf.Redis)
-	if err != nil {
-		return nil, err
-	}
-
 	// Auto-migrate is disabled - use manual migration command instead
 	// if err := migrations.Migrate(db); err != nil {
 	// 	return nil, err
 	// }
 
 	userRepo := repository.NewUserRepository(db)
-	sessionRepo := repository.NewSessionRepository(redisClient)
+	sessionRepo := repository.NewSessionRepository(db)
 	reviewRepo := repository.NewReviewRepository(db)
 	courseRepo := repository.NewCourseRepository(db)
 	pointRepo := repository.NewUserPointRepository(db)
@@ -88,8 +80,7 @@ func NewServiceContainer(conf config.Config, eventPublisher event.Publisher) (*S
 	codeService := auth.NewVerificationCodeService(emailService, codeRepo)
 
 	container := &ServiceContainer{
-		DB:    db,
-		Redis: redisClient,
+		DB: db,
 
 		AuthCommandService:       authcommand.NewAuthCommandService(userRepo, hasher, sessionRepo, codeService),
 		AuthQueryService:         authquery.NewAuthQueryService(userRepo, sessionRepo),
@@ -128,9 +119,6 @@ func (c *ServiceContainer) Close() error {
 		if sqlDB != nil {
 			sqlDB.Close()
 		}
-	}
-	if c.Redis != nil {
-		c.Redis.Close()
 	}
 	return nil
 }

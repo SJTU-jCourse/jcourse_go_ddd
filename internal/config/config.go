@@ -2,20 +2,12 @@ package config
 
 type Config struct {
 	DB    DBConfig    `yaml:"db"`
-	Redis RedisConfig `yaml:"redis"`
 	SMTP  SMTPConfig  `yaml:"smtp"`
 	Event EventConfig `yaml:"event"`
 }
 
 type DBConfig struct {
 	DSN string `yaml:"dsn"`
-}
-
-type RedisConfig struct {
-	Addr     string `yaml:"addr"`
-	Port     int    `yaml:"port"`
-	Password string `yaml:"password"`
-	DB       int    `yaml:"db"`
 }
 
 type SMTPConfig struct {

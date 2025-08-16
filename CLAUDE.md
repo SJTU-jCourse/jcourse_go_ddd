@@ -117,7 +117,6 @@ internal/
     task/              # Background tasks
   infrastructure/      # Infrastructure layer
     database/          # Database connection
-    redis/             # Redis cache
     repository/        # Repository implementations
     entity/            # Database entities
     migrations/        # Database migrations
@@ -128,7 +127,7 @@ pkg/                   # Shared libraries
 
 ### Configuration
 
-- YAML-based configuration with database, Redis, and SMTP settings
+- YAML-based configuration with database and SMTP settings
 - Environment-specific config files in `config/` directory
 - Service container manages dependency injection
 
@@ -139,7 +138,7 @@ pkg/                   # Shared libraries
 - Uses Testify for testing
 - Standard Go project layout with `internal/` for private code
 - Unified server architecture with background workers
-- Event-driven architecture with asynq for async processing
+- Event-driven architecture with domain interfaces preserved for future implementation
 
 ### Key Features
 

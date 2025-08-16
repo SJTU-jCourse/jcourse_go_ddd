@@ -71,8 +71,6 @@ internal/
     web/               # HTTP 控制器和中间件
   infrastructure/      # 基础设施层
     database/          # 数据库连接
-    redis/             # Redis 缓存
-    eventbus/          # 事件总线实现
     repository/        # 仓储实现
     entity/            # 数据库实体
     migrations/        # 数据库迁移
@@ -108,11 +106,6 @@ pkg/                   # 公共库
    ```yaml
    db:
      dsn: "host=localhost user=jcourse password=jcoursepassword dbname=jcourse port=5432 sslmode=disable TimeZone=Asia/Shanghai"
-   redis:
-     addr: "localhost"
-     port: 6379
-     password: ""
-     db: 0
    smtp:
      host: "smtp.gmail.com"
      port: 587

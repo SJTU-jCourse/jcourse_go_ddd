@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 
 	"jcourse_go/internal/domain/auth"
+	"jcourse_go/internal/infrastructure/entity"
 )
 
 const (
@@ -15,18 +16,24 @@ const (
 )
 
 type sessionRepository struct {
-	redis *redis.Client
+	db *gorm.DB
 }
 
-func NewSessionRepository(redisClient *redis.Client) auth.SessionRepository {
-	return &sessionRepository{redis: redisClient}
+func NewSessionRepository(db *gorm.DB) auth.SessionRepository {
+	return &sessionRepository{db: db}
 }
 
 func (r *sessionRepository) Store(ctx context.Context, userID int) (string, error) {
 	sessionID := fmt.Sprintf("session:%d:%d", userID, time.Now().Unix())
+	expiresAt := time.Now().Add(SessionExpiration)
 
-	err := r.redis.Set(ctx, sessionID, userID, SessionExpiration).Err()
-	if err != nil {
+	session := entity.UserSession{
+		UserID:    userID,
+		Token:     sessionID,
+		ExpiresAt: expiresAt,
+	}
+
+	if err := r.db.Create(&session).Error; err != nil {
 		return "", fmt.Errorf("failed to store session: %w", err)
 	}
 
@@ -34,22 +41,20 @@ func (r *sessionRepository) Store(ctx context.Context, userID int) (string, erro
 }
 
 func (r *sessionRepository) Get(ctx context.Context, sessionID string) (int, error) {
-	userIDStr, err := r.redis.Get(ctx, sessionID).Result()
+	var session entity.UserSession
+	err := r.db.Where("token = ? AND expires_at > ?", sessionID, time.Now()).First(&session).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, fmt.Errorf("session not found or expired")
+		}
 		return 0, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	var userID int
-	_, err = fmt.Sscanf(userIDStr, "%d", &userID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse user id: %w", err)
-	}
-
-	return userID, nil
+	return session.UserID, nil
 }
 
 func (r *sessionRepository) Delete(ctx context.Context, sessionID string) error {
-	err := r.redis.Del(ctx, sessionID).Err()
+	err := r.db.Where("token = ?", sessionID).Delete(&entity.UserSession{}).Error
 	if err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}

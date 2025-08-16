@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # API Service
   api:
@@ -15,7 +13,6 @@ services:
       - ./config:/root/config
     depends_on:
       - postgres
-      - redis
     networks:
       - jcourse-network
     restart: unless-stopped
@@ -32,56 +29,27 @@ services:
       - ./config:/root/config
     depends_on:
       - postgres
-      - redis
     networks:
       - jcourse-network
     restart: unless-stopped
 
   # PostgreSQL Database
   postgres:
-    image: postgres:15
+    image: postgres:17
     environment:
       - POSTGRES_DB=jcourse
       - POSTGRES_USER=jcourse
-      - POSTGRES_PASSWORD=jcoursepassword
+      - POSTGRES_PASSWORD=jcourse
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - jcourse-network
-    restart: unless-stopped
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - jcourse-network
-    restart: unless-stopped
-
-  # Nginx Reverse Proxy (Optional)
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - api
     networks:
       - jcourse-network
     restart: unless-stopped
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   jcourse-network:

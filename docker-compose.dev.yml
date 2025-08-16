@@ -1,0 +1,22 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17
+    environment:
+      - POSTGRES_DB=jcourse
+      - POSTGRES_USER=jcourse
+      - POSTGRES_PASSWORD=jcourse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - jcourse-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  jcourse-network:
+    driver: bridge

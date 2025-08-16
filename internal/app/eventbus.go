@@ -1,12 +1,8 @@
 package app
 
 import (
-	"strconv"
-
 	"jcourse_go/internal/config"
 	"jcourse_go/internal/domain/event"
-	eventbusimpl "jcourse_go/internal/infrastructure/eventbus"
-	eventhandler "jcourse_go/internal/interface/handler"
 )
 
 // EventBusSetup holds the eventbus and its configuration
@@ -24,24 +20,11 @@ func SetupEventBus(conf config.Config, serviceContainer *ServiceContainer) (*Eve
 		}, nil
 	}
 
-	redisAddr := conf.Redis.Addr
-	if conf.Redis.Port != 0 {
-		redisAddr = redisAddr + ":" + strconv.Itoa(conf.Redis.Port)
-	}
-
-	eventBus, err := eventbusimpl.NewAsynqEventBus(redisAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Register event handlers
-	if err := eventhandler.RegisterEventHandlers(eventBus, serviceContainer.GetPointCommandService()); err != nil {
-		return nil, err
-	}
-
+	// For now, return a disabled eventbus since we removed asynq
+	// The domain interfaces are preserved for future implementation
 	return &EventBusSetup{
-		EventBus: eventBus,
-		Enabled:  true,
+		EventBus: nil,
+		Enabled:  false,
 	}, nil
 }
 
